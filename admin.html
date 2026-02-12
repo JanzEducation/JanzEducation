@@ -3,61 +3,61 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Control | Janz Education</title>
+    <title>Janz Admin Master</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
-    <style>body { font-family: 'Poppins', sans-serif; background: #f8fafc; }</style>
+    <style>body { font-family: 'Poppins', sans-serif; background: #f1f5f9; }</style>
 </head>
 <body class="p-4 md:p-8 hidden" id="admin-body">
 
     <div class="max-w-6xl mx-auto space-y-8">
         
-        <div class="flex justify-between items-center bg-blue-900 p-6 rounded-2xl shadow-xl text-white">
+        <div class="flex justify-between items-center bg-slate-900 p-6 rounded-3xl shadow-2xl text-white">
             <div>
-                <h1 class="text-2xl font-black text-yellow-400">JANZ ADMIN PANEL</h1>
-                <p class="text-xs opacity-80">Manage Tests & Student Performance</p>
+                <h1 class="text-2xl font-black text-yellow-400">JANZ ADMIN MASTER</h1>
+                <p class="text-[10px] opacity-60 uppercase tracking-widest">Database & Performance Control</p>
             </div>
-            <button onclick="window.location.href='dashboard.html'" class="bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm font-bold transition">Dashboard 🏠</button>
+            <button onclick="window.location.href='dashboard.html'" class="bg-white/10 hover:bg-white/20 px-5 py-2 rounded-xl text-xs font-bold transition border border-white/20">Dashboard 🏠</button>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             
-            <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+            <div class="lg:col-span-2 bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
                 <div class="flex justify-between items-center mb-4">
-                    <h2 class="font-bold text-slate-800 uppercase tracking-wider text-sm">Upload New Test (JSON)</h2>
-                    <button onclick="document.getElementById('json-input').value=''" class="text-[10px] text-red-500 font-bold hover:underline">Clear Area</button>
+                    <h2 class="font-bold text-slate-800 text-sm italic">UPLOAD NEW TEST</h2>
+                    <button onclick="document.getElementById('json-input').value=''" class="text-[10px] bg-slate-100 px-2 py-1 rounded text-slate-500 font-bold hover:bg-red-50 hover:text-red-500">CLEAR</button>
                 </div>
-                <textarea id="json-input" rows="12" class="w-full p-4 border border-slate-100 rounded-xl font-mono text-xs bg-slate-50 mb-4 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Paste your Test JSON here..."></textarea>
-                <button id="upload-btn" onclick="uploadJSON()" class="w-full bg-blue-900 text-white py-4 rounded-xl font-bold hover:bg-yellow-500 hover:text-black transition shadow-lg uppercase tracking-widest text-sm">Publish Test Now 🚀</button>
-                <p id="upload-status" class="mt-3 text-center text-xs font-bold"></p>
+                <textarea id="json-input" rows="12" class="w-full p-4 border border-slate-100 rounded-2xl font-mono text-xs bg-slate-50 mb-4 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Paste your Test JSON here..."></textarea>
+                <button id="upload-btn" onclick="uploadJSON()" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold hover:bg-yellow-500 hover:text-black transition shadow-lg uppercase tracking-widest text-xs">Publish Test 🚀</button>
+                <p id="upload-status" class="mt-3 text-center text-[10px] font-bold uppercase"></p>
             </div>
 
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                <h2 class="font-bold text-slate-800 mb-4 text-sm flex items-center gap-2">📂 RECENT TESTS</h2>
+            <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
+                <h2 class="font-bold text-slate-800 mb-4 text-sm flex items-center gap-2">📂 RECENT</h2>
                 <div id="uploads-list" class="space-y-3 max-h-[400px] overflow-y-auto pr-2">
-                    <p class="text-center text-gray-400 text-xs py-10 tracking-widest">Checking Database...</p>
+                    <p class="text-center text-gray-300 text-[10px] py-10">Loading...</p>
                 </div>
             </div>
 
         </div>
 
-        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="font-bold text-slate-800 uppercase tracking-wider text-sm">🏆 Student Results & Accuracy</h2>
-                <button onclick="loadData()" class="text-blue-600 font-bold text-xs hover:bg-blue-50 px-3 py-1 rounded">Refresh All 🔄</button>
+        <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
+            <div class="flex justify-between items-center mb-6 border-b pb-4">
+                <h2 class="font-bold text-slate-800 uppercase tracking-wider text-xs">🏆 Student Results (Score & Accuracy)</h2>
+                <button onclick="loadData()" class="text-blue-600 font-bold text-[10px] hover:bg-blue-50 px-3 py-1 rounded-full border border-blue-100">REFRESH ALL 🔄</button>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left">
                     <thead>
-                        <tr class="text-slate-400 text-[10px] font-bold border-b uppercase">
-                            <th class="pb-3">Student Name</th>
-                            <th class="pb-3">Exam/Test</th>
-                            <th class="pb-3">Score</th>
-                            <th class="pb-3">Accuracy</th>
-                            <th class="pb-3 text-right">Date</th>
+                        <tr class="text-slate-400 text-[10px] font-bold uppercase">
+                            <th class="pb-4">Student Name</th>
+                            <th class="pb-4">Test Title</th>
+                            <th class="pb-4">Score</th>
+                            <th class="pb-4">Accuracy</th>
+                            <th class="pb-4 text-right">Date</th>
                         </tr>
                     </thead>
-                    <tbody id="results-table" class="text-sm font-semibold">
+                    <tbody id="results-table" class="text-sm">
                         </tbody>
                 </table>
             </div>
@@ -81,44 +81,30 @@
             }
         });
 
-        // RE-FETCH ALL DATA
         window.loadData = () => {
             loadRecentUploads();
             loadStudentResults();
         };
 
-        // 🚀 UPLOAD LOGIC
         window.uploadJSON = async () => {
             const btn = document.getElementById('upload-btn');
             const input = document.getElementById('json-input');
             const status = document.getElementById('upload-status');
-            
-            if(!input.value.trim()) return alert("JSON Area Khali Hai!");
-
+            if(!input.value.trim()) return alert("JSON Area empty!");
             try {
                 const data = JSON.parse(input.value);
                 btn.innerText = "Processing..."; btn.disabled = true;
-                status.innerText = "Connecting to Firebase...";
-
-                await addDoc(collection(db, "tests"), {
-                    ...data,
-                    totalQuestions: data.questions.length,
-                    createdAt: serverTimestamp()
-                });
-
-                status.innerText = "✅ Test Published Successfully!";
-                status.className = "mt-3 text-center text-xs font-bold text-green-600";
+                await addDoc(collection(db, "tests"), { ...data, totalQuestions: data.questions.length, createdAt: serverTimestamp() });
+                status.innerText = "✅ Successfully Published!";
+                status.className = "mt-3 text-center text-[10px] font-bold text-green-600";
                 input.value = ""; loadData();
             } catch (err) {
-                status.innerText = "❌ Error: " + err.message;
-                status.className = "mt-3 text-center text-xs font-bold text-red-600";
-                alert("Check JSON Formatting!");
+                alert("JSON Error: " + err.message);
             } finally {
-                btn.innerText = "Publish Test Now 🚀"; btn.disabled = false;
+                btn.innerText = "Publish Test 🚀"; btn.disabled = false;
             }
         };
 
-        // 📂 LOAD RECENT TESTS
         async function loadRecentUploads() {
             const list = document.getElementById('uploads-list');
             const q = query(collection(db, "tests"), orderBy("createdAt", "desc"), limit(10));
@@ -126,36 +112,50 @@
             list.innerHTML = "";
             snap.forEach(doc => {
                 const t = doc.data();
-                list.innerHTML += `<div class="p-3 bg-slate-50 border border-slate-100 rounded-xl">
-                    <p class="text-[9px] font-black text-blue-600 uppercase">${t.exam}</p>
-                    <p class="text-xs font-bold text-slate-800">${t.title}</p>
+                list.innerHTML += `<div class="p-3 bg-slate-50 border border-slate-100 rounded-2xl">
+                    <p class="text-[8px] font-black text-blue-500 uppercase">${t.exam}</p>
+                    <p class="text-[11px] font-bold text-slate-800">${t.title}</p>
                 </div>`;
             });
         }
 
-        // 🏆 LOAD STUDENT RESULTS
         async function loadStudentResults() {
             const table = document.getElementById('results-table');
             try {
-                const resSnap = await getDocs(query(collection(db, "results"), orderBy("timestamp", "desc")));
-                const userSnap = await getDocs(collection(db, "users"));
-                const testSnap = await getDocs(collection(db, "tests"));
+                // 1. Fetch Users, Tests, and Results in Parallel
+                const [userSnap, testSnap, resSnap] = await Promise.all([
+                    getDocs(collection(db, "users")),
+                    getDocs(collection(db, "tests")),
+                    getDocs(query(collection(db, "results"), orderBy("timestamp", "desc")))
+                ]);
 
-                const usersMap = {}; userSnap.forEach(d => usersMap[d.id] = d.data().name);
-                const testsMap = {}; testSnap.forEach(d => testsMap[d.id] = d.data().title);
+                // 2. Map Users (ID to Name)
+                const usersMap = {}; 
+                userSnap.forEach(d => {
+                    const u = d.data();
+                    usersMap[d.id] = u.name || (u.email ? u.email.split('@')[0] : "Student");
+                });
 
+                // 3. Map Tests (ID to Title)
+                const testsMap = {}; 
+                testSnap.forEach(d => testsMap[d.id] = d.data().title || "Test");
+
+                // 4. Build Table
                 table.innerHTML = "";
                 if(resSnap.empty) table.innerHTML = "<tr><td colspan='5' class='text-center py-10 text-slate-300'>No results found</td></tr>";
 
                 resSnap.forEach(doc => {
                     const r = doc.data();
-                    const date = r.timestamp ? new Date(r.timestamp.seconds * 1000).toLocaleDateString() : 'New';
-                    table.innerHTML += `<tr class="border-b border-slate-50 hover:bg-slate-50/50">
-                        <td class="py-4 text-slate-700">${usersMap[r.userId] || 'User'}</td>
-                        <td class="py-4 text-slate-400 text-xs">${testsMap[r.testId] || 'Test'}</td>
-                        <td class="py-4 text-blue-700 font-black">${r.score}</td>
-                        <td class="py-4"><span class="bg-green-100 text-green-700 px-2 py-1 rounded text-[10px] font-bold">${r.accuracy}%</span></td>
-                        <td class="py-4 text-right text-[10px] text-slate-300">${date}</td>
+                    const sName = usersMap[r.userId] || "Guest Student";
+                    const tName = testsMap[r.testId] || "Deleted Test";
+                    const date = r.timestamp ? new Date(r.timestamp.seconds * 1000).toLocaleDateString() : 'Now';
+                    
+                    table.innerHTML += `<tr class="border-b border-slate-50 hover:bg-slate-50 transition">
+                        <td class="py-4 text-slate-800 font-bold">${sName}</td>
+                        <td class="py-4 text-slate-400 text-xs">${tName}</td>
+                        <td class="py-4 text-blue-600 font-black">${r.score}</td>
+                        <td class="py-4"><span class="bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-[10px] font-bold">${r.accuracy}%</span></td>
+                        <td class="py-4 text-right text-[10px] text-slate-300 font-bold">${date}</td>
                     </tr>`;
                 });
             } catch (e) { console.error(e); }
