@@ -14,13 +14,16 @@
     <style>
         body { font-family: 'Poppins', sans-serif; background: #f8fafc; }
         .brand-font { font-family: 'Cinzel', serif; }
-        /* Glass Effect */
         .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px); }
-        /* शुरुआत में स्क्रीन छुपा कर रखें ताकि झटका न लगे */
-        body { opacity: 0; transition: opacity 0.5s ease-in; }
     </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-6 bg-slate-100" onload="document.body.style.opacity='1'">
+<body class="min-h-screen flex items-center justify-center p-6 bg-slate-100">
+
+    <div id="loader" class="fixed inset-0 flex flex-col items-center justify-center bg-slate-50 z-50">
+        <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-900 mb-4"></div>
+        <h2 class="text-blue-900 font-bold text-lg brand-font animate-pulse">JANZ EDUCATION</h2>
+        <p class="text-xs text-slate-400 font-bold uppercase tracking-widest mt-2">Checking Login...</p>
+    </div>
 
     <div id="login-container" style="display:none;" class="max-w-md w-full glass-card p-10 rounded-[3rem] shadow-2xl border border-white text-center relative overflow-hidden">
         
@@ -59,39 +62,48 @@
         import { GoogleAuthProvider, signInWithRedirect, getRedirectResult, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // सर्विस वर्कर (App Install Feature)
+        // PWA
         if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 
-        // 🔥 SUPER FAST LOGIC 🔥
+        // 🔥 MAIN STABLE LOGIC 🔥
         
-        // 1. Google से लौटते ही पकड़ो (Redirect Catch)
-        getRedirectResult(auth).then(async (result) => {
-            if (result && result.user) {
-                // अगर गूगल से लॉगिन होकर आया है -> सीधा अंदर
-                await saveUser(result.user);
-                window.location.replace("dashboard.html");
-            }
-        }).catch((error) => {
-            console.error(error);
-        });
+        // 1. Google Redirect Result Check (वापसी चेक करें)
+        getRedirectResult(auth)
+            .then(async (result) => {
+                if (result && result.user) {
+                    console.log("Redirect Login Success");
+                    await saveUser(result.user);
+                    window.location.replace("dashboard.html");
+                }
+            })
+            .catch((error) => {
+                console.error("Login Error:", error);
+                alert("Login Error: " + error.message);
+                // एरर आया तो लोडर हटाओ, लॉगिन दिखाओ
+                document.getElementById('loader').style.display = 'none';
+                document.getElementById('login-container').style.display = 'block';
+            });
 
-        // 2. क्या पहले से लॉगिन है? (Auto Login)
+        // 2. Auth State Check (क्या पहले से लॉगिन है?)
         onAuthStateChanged(auth, async (user) => {
             if (user) {
-                // हाँ, पुराना बंदा है -> सीधा डैशबोर्ड भेजो
-                // (बिना लोडिंग दिखाए)
+                // अगर यूजर है -> तो डैशबोर्ड भेजो
+                await saveUser(user);
                 window.location.replace("dashboard.html");
             } else {
-                // नहीं, नया बंदा है -> लॉगिन स्क्रीन दिखाओ
-                document.getElementById('login-container').style.display = 'block';
+                // अगर यूजर नहीं है -> लोडर हटाओ और लॉगिन दिखाओ
+                // (थोड़ा रुक कर ताकि Redirect वाला चेक पूरा हो सके)
+                setTimeout(() => {
+                    document.getElementById('loader').style.display = 'none';
+                    document.getElementById('login-container').style.display = 'block';
+                }, 1000);
             }
         });
 
-        // यूजर सेव करने का छोटा फंक्शन
+        // User Save Helper
         async function saveUser(user) {
             const userRef = doc(db, "users", user.uid);
-            // हम चेक नहीं करेंगे, सीधा अपडेट कर देंगे (Faster)
-            // setDoc merge:true के साथ बहुत तेज होता है
+            // merge: true का मतलब है पुराना डेटा न उड़े, बस नया जुड़े
             await setDoc(userRef, {
                 name: user.displayName, 
                 email: user.email,
@@ -103,20 +115,29 @@
         // 🚀 Google Button Action
         window.loginWithGoogle = () => {
             const provider = new GoogleAuthProvider();
-            // बटन दबाते ही लॉगिन स्क्रीन गायब कर दो ताकि लोडिंग न लगे
-            document.body.style.opacity = '0.5'; 
+            // बटन दबाते ही लोडर वापस लाओ
+            document.getElementById('login-container').style.display = 'none';
+            document.getElementById('loader').style.display = 'flex';
             signInWithRedirect(auth, provider);
         };
 
-        // 📧 Email Login Action
+        // 📧 Email Login
         window.loginEmail = async () => {
             const email = document.getElementById('email').value;
             const pass = document.getElementById('password').value;
-            if(!email || !pass) return alert("Please fill details");
+            if(!email || !pass) return alert("Please fill all fields");
+            
+            document.getElementById('login-container').style.display = 'none';
+            document.getElementById('loader').style.display = 'flex';
+            
             try {
                 await signInWithEmailAndPassword(auth, email, pass);
                 window.location.replace("dashboard.html");
-            } catch (error) { alert(error.message); }
+            } catch (error) {
+                alert("Error: " + error.message);
+                document.getElementById('loader').style.display = 'none';
+                document.getElementById('login-container').style.display = 'block';
+            }
         };
     </script>
 </body>
