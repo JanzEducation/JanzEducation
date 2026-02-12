@@ -1,166 +1,44 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel | Janz Education</title>
+    <meta charset="UTF-8"><title>Admin JSON Upload | Janz Education</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-    <style>body { font-family: 'Poppins', sans-serif; }</style>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 </head>
-<body class="bg-gray-50 min-h-screen p-5 hidden" id="admin-body"> 
-    <div class="max-w-4xl mx-auto bg-white p-6 rounded-xl shadow-lg border-t-4 border-blue-600">
+<body class="bg-slate-100 font-['Poppins'] p-5 hidden" id="admin-body">
+    <div class="max-w-3xl mx-auto bg-white p-8 rounded-2xl shadow-lg border-t-8 border-blue-900">
+        <h1 class="text-2xl font-bold text-blue-900 mb-2">JSON Master Uploader 🚀</h1>
+        <p class="text-sm text-gray-500 mb-6">यहाँ अपना टेस्ट JSON पेस्ट करें, सिस्टम अपने आप Exam, Subject और Chapter फोल्डर बना देगा।</p>
         
-        <div class="flex justify-between items-center mb-6">
-            <h1 class="text-2xl font-bold text-gray-800">Admin Control Panel 🛠️</h1>
-            <button onclick="window.location.href='dashboard.html'" class="text-blue-600 font-bold hover:underline">Go to Dashboard →</button>
-        </div>
-
-        <p class="mb-4 text-sm text-green-600 font-bold">Welcome, Admin (Ayub Janz) ✅</p>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <input id="t-title" type="text" placeholder="Test Title (e.g. Genetics Mock 01)" class="p-3 border rounded shadow-sm">
-            <input id="t-subject" type="text" placeholder="Subject (e.g. Biology)" class="p-3 border rounded shadow-sm">
-            <input id="t-time" type="number" placeholder="Duration (Minutes)" class="p-3 border rounded shadow-sm">
-            <input id="t-marks" type="number" placeholder="Total Marks" class="p-3 border rounded shadow-sm">
-        </div>
-
-        <hr class="my-6">
-
-        <div class="bg-blue-50 p-5 rounded-lg border border-blue-200 mb-6">
-            <h3 class="font-bold text-blue-900 mb-3">➕ Add Question</h3>
-            
-            <textarea id="q-text" placeholder="Question Type karein..." class="w-full p-3 border rounded mb-3" rows="2"></textarea>
-            
-            <div class="grid grid-cols-2 gap-3 mb-3">
-                <input id="opt-1" type="text" placeholder="Option A" class="p-2 border rounded">
-                <input id="opt-2" type="text" placeholder="Option B" class="p-2 border rounded">
-                <input id="opt-3" type="text" placeholder="Option C" class="p-2 border rounded">
-                <input id="opt-4" type="text" placeholder="Option D" class="p-2 border rounded">
-            </div>
-
-            <select id="correct-opt" class="w-full p-2 border rounded mb-3 bg-white">
-                <option value="">Select Correct Answer</option>
-                <option value="1">Option A</option>
-                <option value="2">Option B</option>
-                <option value="3">Option C</option>
-                <option value="4">Option D</option>
-            </select>
-
-            <button onclick="addQuestion()" class="bg-blue-600 text-white px-6 py-2 rounded font-bold hover:bg-blue-700 w-full md:w-auto">Add Question to List</button>
-        </div>
-
-        <div id="questions-list" class="space-y-3 mb-6 max-h-60 overflow-y-auto">
-            </div>
-
-        <button onclick="uploadTest()" class="w-full bg-green-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-green-700 shadow-lg transform hover:scale-[1.02] transition">
-            🚀 PUBLISH TEST NOW
-        </button>
-
+        <textarea id="json-input" rows="15" class="w-full p-4 border rounded-xl font-mono text-sm bg-gray-50 mb-4" placeholder='Paste your Test JSON here...'></textarea>
+        
+        <button onclick="uploadJSON()" class="w-full bg-blue-900 text-white py-4 rounded-xl font-bold hover:bg-yellow-500 hover:text-black transition">PUBLISH TEST AUTOMATICALLY</button>
     </div>
 
     <script type="module">
-        import { auth, db } from "./config.js"; // Auth bhi import kiya check karne ke liye
+        import { auth, db } from "./config.js";
         import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // 🔥 SECURITY CHECK (Sirf Ayub Janz ke liye)
         const ADMIN_EMAIL = "mdayubjanz@gmail.com"; 
-
         onAuthStateChanged(auth, (user) => {
-            if (user && user.email === ADMIN_EMAIL) {
-                // Agar tum ho, to page dikhao
-                document.getElementById('admin-body').classList.remove('hidden');
-            } else {
-                // Agar koi aur hai, to wapas bhejo
-                alert("Access Denied! Sirf Admin allowed hai.");
-                window.location.href = "dashboard.html";
-            }
+            if (user && user.email === ADMIN_EMAIL) document.getElementById('admin-body').classList.remove('hidden');
+            else window.location.href = "dashboard.html";
         });
 
-        // --- Baki Code Same Hai ---
-        let questionsArray = [];
+        window.uploadJSON = async () => {
+            try {
+                const data = JSON.parse(document.getElementById('json-input').value);
+                if(!data.exam || !data.questions) throw new Error("JSON missing exam or questions!");
 
-        window.addQuestion = () => {
-            const qText = document.getElementById('q-text').value;
-            const opt1 = document.getElementById('opt-1').value;
-            const opt2 = document.getElementById('opt-2').value;
-            const opt3 = document.getElementById('opt-3').value;
-            const opt4 = document.getElementById('opt-4').value;
-            const correct = document.getElementById('correct-opt').value;
-
-            if(!qText || !opt1 || !opt2 || !opt3 || !opt4 || !correct) {
-                alert("Please fill all fields!");
-                return;
-            }
-
-            const newQ = {
-                question: qText,
-                options: [opt1, opt2, opt3, opt4],
-                answer: parseInt(correct) - 1 // 0-3 index
-            };
-
-            questionsArray.push(newQ);
-            renderList();
-            
-            // Clear fields
-            document.getElementById('q-text').value = "";
-            document.getElementById('opt-1').value = "";
-            document.getElementById('opt-2').value = "";
-            document.getElementById('opt-3').value = "";
-            document.getElementById('opt-4').value = "";
-        };
-
-        function renderList() {
-            const list = document.getElementById('questions-list');
-            list.innerHTML = `<h3 class="font-bold">Total Questions: ${questionsArray.length}</h3>`;
-            questionsArray.forEach((q, index) => {
-                list.innerHTML += `
-                    <div class="bg-gray-100 p-3 rounded flex justify-between items-center">
-                        <span class="text-sm"><b>Q${index + 1}:</b> ${q.question}</span>
-                        <button class="text-red-500 font-bold px-2" onclick="removeQ(${index})">❌</button>
-                    </div>
-                `;
-            });
-        }
-
-        window.removeQ = (idx) => {
-            questionsArray.splice(idx, 1);
-            renderList();
-        }
-
-        window.uploadTest = async () => {
-            const title = document.getElementById('t-title').value;
-            const subject = document.getElementById('t-subject').value;
-            const time = document.getElementById('t-time').value;
-            const marks = document.getElementById('t-marks').value;
-
-            if(!title || questionsArray.length === 0) {
-                alert("Test Title or Questions missing!");
-                return;
-            }
-
-            if(confirm(`Confirm Upload?\nTitle: ${title}\nQuestions: ${questionsArray.length}`)) {
-                try {
-                    await addDoc(collection(db, "tests"), {
-                        title: title,
-                        subject: subject,
-                        duration: time,
-                        totalMarks: marks,
-                        totalQuestions: questionsArray.length,
-                        questions: questionsArray,
-                        createdAt: serverTimestamp()
-                    });
-                    alert("✅ Test Uploaded Successfully!");
-                    // Reset sab kuch
-                    questionsArray = [];
-                    renderList();
-                    document.getElementById('t-title').value = "";
-                    document.getElementById('t-subject').value = "";
-                } catch (err) {
-                    alert("Error: " + err.message);
-                }
-            }
+                await addDoc(collection(db, "tests"), {
+                    ...data,
+                    totalQuestions: data.questions.length,
+                    createdAt: serverTimestamp()
+                });
+                alert("✅ Test Added to " + data.exam + " Folder!");
+                document.getElementById('json-input').value = "";
+            } catch (err) { alert("❌ Invalid JSON: " + err.message); }
         };
     </script>
 </body>
