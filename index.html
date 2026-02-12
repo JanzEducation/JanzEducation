@@ -24,16 +24,16 @@
         </div>
 
         <form id="login-form" class="space-y-4">
-            <input type="email" id="l-email" placeholder="Email Address" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" required>
-            <input type="password" id="l-password" placeholder="Password" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" required>
-            <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition">Login Now</button>
+            <input type="email" id="l-email" placeholder="Email Address" class="w-full p-3 border rounded-lg outline-none" required>
+            <input type="password" id="l-password" placeholder="Password" class="w-full p-3 border rounded-lg outline-none" required>
+            <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold">Login Now</button>
         </form>
 
         <form id="signup-form" class="hidden space-y-4">
-            <input type="text" id="s-name" placeholder="Full Name (e.g. Student Name)" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none" required>
-            <input type="email" id="s-email" placeholder="Email Address" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none" required>
-            <input type="password" id="s-password" placeholder="Set Password (Min 6 chars)" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none" required>
-            <button type="submit" class="w-full bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700 transition">Create Account</button>
+            <input type="text" id="s-name" placeholder="Full Name" class="w-full p-3 border rounded-lg outline-none" required>
+            <input type="email" id="s-email" placeholder="Email Address" class="w-full p-3 border rounded-lg outline-none" required>
+            <input type="password" id="s-password" placeholder="Set Password" class="w-full p-3 border rounded-lg outline-none" required>
+            <button type="submit" class="w-full bg-green-600 text-white py-3 rounded-lg font-bold">Create Account</button>
         </form>
     </div>
 
@@ -47,86 +47,58 @@
 
         // Tab Switching
         document.getElementById('tab-login').onclick = () => {
-            toggleForms('login');
+            document.getElementById('login-form').classList.remove('hidden');
+            document.getElementById('signup-form').classList.add('hidden');
+            document.getElementById('tab-login').className = "w-1/2 pb-2 border-b-2 border-blue-600 font-bold text-blue-600";
+            document.getElementById('tab-signup').className = "w-1/2 pb-2 text-gray-400 font-bold";
         };
+
         document.getElementById('tab-signup').onclick = () => {
-            toggleForms('signup');
+            document.getElementById('signup-form').classList.remove('hidden');
+            document.getElementById('login-form').classList.add('hidden');
+            document.getElementById('tab-signup').className = "w-1/2 pb-2 border-b-2 border-blue-600 font-bold text-blue-600";
+            document.getElementById('tab-login').className = "w-1/2 pb-2 text-gray-400 font-bold";
         };
 
-        function toggleForms(type) {
-            if(type === 'login') {
-                document.getElementById('login-form').classList.remove('hidden');
-                document.getElementById('signup-form').classList.add('hidden');
-                document.getElementById('tab-login').className = "w-1/2 pb-2 border-b-2 border-blue-600 font-bold text-blue-600";
-                document.getElementById('tab-signup').className = "w-1/2 pb-2 text-gray-400 font-bold";
-            } else {
-                document.getElementById('signup-form').classList.remove('hidden');
-                document.getElementById('login-form').classList.add('hidden');
-                document.getElementById('tab-signup').className = "w-1/2 pb-2 border-b-2 border-blue-600 font-bold text-blue-600";
-                document.getElementById('tab-login').className = "w-1/2 pb-2 text-gray-400 font-bold";
-            }
-        }
-
-        // 🚀 LOGIN LOGIC
+        // LOGIN
         document.getElementById('login-form').onsubmit = async (e) => {
             e.preventDefault();
             showMessage("Logging in...", "blue");
-            const email = document.getElementById('l-email').value;
-            const pass = document.getElementById('l-password').value;
-
             try {
-                await signInWithEmailAndPassword(auth, email, pass);
-                handleRedirect(email);
-            } catch (err) {
-                showMessage("Login Error: " + err.message, "red");
-            }
+                const email = document.getElementById('l-email').value;
+                await signInWithEmailAndPassword(auth, email, document.getElementById('l-password').value);
+                window.location.href = (email === ADMIN_EMAIL) ? "admin.html" : "dashboard.html";
+            } catch (err) { showMessage(err.message, "red"); }
         };
 
-        // 🚀 SIGNUP LOGIC (Fixed: Turant Dashboard Khulega)
+        // 🚀 FAST SIGNUP (Ab nahi atkega)
         document.getElementById('signup-form').onsubmit = async (e) => {
             e.preventDefault();
-            showMessage("Creating Account...", "blue");
+            showMessage("Processing...", "blue");
             
             const name = document.getElementById('s-name').value;
             const email = document.getElementById('s-email').value;
             const pass = document.getElementById('s-password').value;
 
             try {
-                // 1. Account Create Karo
+                // 1. Account Banao
                 const userCred = await createUserWithEmailAndPassword(auth, email, pass);
                 
-                // 2. Display Name Update Karo
+                // 2. Name Update Karo
                 await updateProfile(userCred.user, { displayName: name });
 
-                // 3. Database me entry (Background me chalne do, wait mat karo)
+                // 3. Database me Background me save karo (Don't use 'await' here)
                 setDoc(doc(db, "users", userCred.user.uid), {
-                    name: name,
-                    email: email,
-                    role: "student",
-                    createdAt: new Date()
-                }).catch(e => console.log("DB Entry Delay"));
+                    name: name, email: email, role: "student", createdAt: new Date()
+                }).catch(e => console.log("DB Skip"));
 
-                // 4. ✅ SEEDHA DASHBOARD PAR BHEJO
-                showMessage("Account Created! Redirecting...", "green");
-                setTimeout(() => {
-                    window.location.href = "dashboard.html";
-                }, 800); 
+                // 4. ✅ SEEDHA BHEJO (Wait mat karo)
+                window.location.href = "dashboard.html";
 
             } catch (err) {
-                showMessage("Signup Error: " + err.message, "red");
+                showMessage(err.message, "red");
             }
         };
-
-        function handleRedirect(email) {
-            showMessage("Success! Opening Portal...", "green");
-            setTimeout(() => {
-                if (email === ADMIN_EMAIL) {
-                    window.location.href = "admin.html";
-                } else {
-                    window.location.href = "dashboard.html";
-                }
-            }, 800);
-        }
 
         function showMessage(txt, color) {
             msgBox.innerText = txt;
