@@ -1,8 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Janz Admin Master</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
@@ -14,28 +13,24 @@
         
         <div class="flex justify-between items-center bg-slate-900 p-6 rounded-3xl shadow-2xl text-white">
             <div>
-                <h1 class="text-2xl font-black text-yellow-400">JANZ ADMIN MASTER</h1>
-                <p class="text-[10px] opacity-60 uppercase tracking-widest">Database & Performance Control</p>
+                <h1 class="text-2xl font-black text-yellow-400 uppercase">Admin Control</h1>
+                <p class="text-[10px] opacity-60 tracking-widest">Janz Education System 🚀</p>
             </div>
-            <button onclick="window.location.href='dashboard.html'" class="bg-white/10 hover:bg-white/20 px-5 py-2 rounded-xl text-xs font-bold transition border border-white/20">Dashboard 🏠</button>
+            <button onclick="window.location.href='dashboard.html'" class="bg-white/10 hover:bg-white/20 px-5 py-2 rounded-xl text-xs font-bold border border-white/20">Dashboard</button>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             
             <div class="lg:col-span-2 bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="font-bold text-slate-800 text-sm italic">UPLOAD NEW TEST</h2>
-                    <button onclick="document.getElementById('json-input').value=''" class="text-[10px] bg-slate-100 px-2 py-1 rounded text-slate-500 font-bold hover:bg-red-50 hover:text-red-500">CLEAR</button>
-                </div>
-                <textarea id="json-input" rows="12" class="w-full p-4 border border-slate-100 rounded-2xl font-mono text-xs bg-slate-50 mb-4 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Paste your Test JSON here..."></textarea>
-                <button id="upload-btn" onclick="uploadJSON()" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold hover:bg-yellow-500 hover:text-black transition shadow-lg uppercase tracking-widest text-xs">Publish Test 🚀</button>
-                <p id="upload-status" class="mt-3 text-center text-[10px] font-bold uppercase"></p>
+                <h2 class="font-bold text-slate-800 text-sm mb-4">UPLOAD NEW TEST</h2>
+                <textarea id="json-input" rows="12" class="w-full p-4 border border-slate-100 rounded-2xl font-mono text-xs bg-slate-50 mb-4 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Paste JSON here..."></textarea>
+                <button id="upload-btn" onclick="uploadJSON()" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold hover:bg-yellow-500 hover:text-black transition uppercase tracking-widest text-xs">Publish Test</button>
             </div>
 
             <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
-                <h2 class="font-bold text-slate-800 mb-4 text-sm flex items-center gap-2">📂 RECENT</h2>
+                <h2 class="font-bold text-slate-800 mb-4 text-sm">📂 MANAGE TESTS</h2>
                 <div id="uploads-list" class="space-y-3 max-h-[400px] overflow-y-auto pr-2">
-                    <p class="text-center text-gray-300 text-[10px] py-10">Loading...</p>
+                    <p class="text-center text-gray-300 text-[10px] py-10 tracking-widest">Loading...</p>
                 </div>
             </div>
 
@@ -43,119 +38,99 @@
 
         <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
             <div class="flex justify-between items-center mb-6 border-b pb-4">
-                <h2 class="font-bold text-slate-800 uppercase tracking-wider text-xs">🏆 Student Results (Score & Accuracy)</h2>
+                <h2 class="font-bold text-slate-800 uppercase tracking-wider text-xs">🏆 Student Results</h2>
                 <button onclick="loadData()" class="text-blue-600 font-bold text-[10px] hover:bg-blue-50 px-3 py-1 rounded-full border border-blue-100">REFRESH ALL 🔄</button>
             </div>
             <div class="overflow-x-auto">
-                <table class="w-full text-left">
+                <table class="w-full text-left text-sm">
                     <thead>
-                        <tr class="text-slate-400 text-[10px] font-bold uppercase">
+                        <tr class="text-slate-400 text-[10px] font-bold uppercase border-b">
                             <th class="pb-4">Student Name</th>
                             <th class="pb-4">Test Title</th>
-                            <th class="pb-4">Score</th>
-                            <th class="pb-4">Accuracy</th>
+                            <th class="pb-4 text-center">Score</th>
+                            <th class="pb-4 text-center">Accuracy</th>
                             <th class="pb-4 text-right">Date</th>
                         </tr>
                     </thead>
-                    <tbody id="results-table" class="text-sm">
-                        </tbody>
+                    <tbody id="results-table"></tbody>
                 </table>
             </div>
         </div>
-
     </div>
 
     <script type="module">
         import { auth, db } from "./config.js";
         import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { collection, addDoc, getDocs, query, orderBy, limit, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-        const ADMIN_EMAIL = "mdayubjanz@gmail.com"; 
+        import { collection, addDoc, getDocs, deleteDoc, doc, query, orderBy, limit, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         onAuthStateChanged(auth, (user) => {
-            if (user && user.email === ADMIN_EMAIL) {
+            if (user && user.email === "mdayubjanz@gmail.com") {
                 document.getElementById('admin-body').classList.remove('hidden');
                 loadData();
-            } else {
-                window.location.href = "index.html";
-            }
+            } else { window.location.href = "index.html"; }
         });
 
-        window.loadData = () => {
-            loadRecentUploads();
-            loadStudentResults();
-        };
+        window.loadData = () => { loadRecentUploads(); loadStudentResults(); };
 
+        // 🚀 UPLOAD
         window.uploadJSON = async () => {
-            const btn = document.getElementById('upload-btn');
             const input = document.getElementById('json-input');
-            const status = document.getElementById('upload-status');
-            if(!input.value.trim()) return alert("JSON Area empty!");
             try {
                 const data = JSON.parse(input.value);
-                btn.innerText = "Processing..."; btn.disabled = true;
                 await addDoc(collection(db, "tests"), { ...data, totalQuestions: data.questions.length, createdAt: serverTimestamp() });
-                status.innerText = "✅ Successfully Published!";
-                status.className = "mt-3 text-center text-[10px] font-bold text-green-600";
-                input.value = ""; loadData();
-            } catch (err) {
-                alert("JSON Error: " + err.message);
-            } finally {
-                btn.innerText = "Publish Test 🚀"; btn.disabled = false;
+                alert("Published!"); input.value = ""; loadData();
+            } catch (err) { alert("Error: " + err.message); }
+        };
+
+        // 🗑️ DELETE TEST FUNCTION
+        window.deleteTest = async (id) => {
+            if (confirm("क्या आप वाकई इस टेस्ट को डिलीट करना चाहते हैं?")) {
+                try {
+                    await deleteDoc(doc(db, "tests", id));
+                    alert("Test Deleted!");
+                    loadData();
+                } catch (e) { alert("Delete failed!"); }
             }
         };
 
+        // 📂 LOAD LIST WITH DELETE BUTTON
         async function loadRecentUploads() {
             const list = document.getElementById('uploads-list');
-            const q = query(collection(db, "tests"), orderBy("createdAt", "desc"), limit(10));
+            const q = query(collection(db, "tests"), orderBy("createdAt", "desc"), limit(15));
             const snap = await getDocs(q);
             list.innerHTML = "";
-            snap.forEach(doc => {
-                const t = doc.data();
-                list.innerHTML += `<div class="p-3 bg-slate-50 border border-slate-100 rounded-2xl">
-                    <p class="text-[8px] font-black text-blue-500 uppercase">${t.exam}</p>
-                    <p class="text-[11px] font-bold text-slate-800">${t.title}</p>
+            snap.forEach(d => {
+                const t = d.data();
+                list.innerHTML += `<div class="p-3 bg-slate-50 border border-slate-100 rounded-2xl flex justify-between items-center">
+                    <div>
+                        <p class="text-[8px] font-black text-blue-500 uppercase">${t.exam}</p>
+                        <p class="text-[11px] font-bold text-slate-800">${t.title}</p>
+                    </div>
+                    <button onclick="deleteTest('${d.id}')" class="text-red-500 hover:bg-red-50 p-2 rounded-lg transition">🗑️</button>
                 </div>`;
             });
         }
 
+        // 🏆 LOAD RESULTS
         async function loadStudentResults() {
             const table = document.getElementById('results-table');
             try {
-                // 1. Fetch Users, Tests, and Results in Parallel
-                const [userSnap, testSnap, resSnap] = await Promise.all([
-                    getDocs(collection(db, "users")),
-                    getDocs(collection(db, "tests")),
+                const [uSnap, tSnap, rSnap] = await Promise.all([
+                    getDocs(collection(db, "users")), getDocs(collection(db, "tests")),
                     getDocs(query(collection(db, "results"), orderBy("timestamp", "desc")))
                 ]);
-
-                // 2. Map Users (ID to Name)
-                const usersMap = {}; 
-                userSnap.forEach(d => {
-                    const u = d.data();
-                    usersMap[d.id] = u.name || (u.email ? u.email.split('@')[0] : "Student");
-                });
-
-                // 3. Map Tests (ID to Title)
-                const testsMap = {}; 
-                testSnap.forEach(d => testsMap[d.id] = d.data().title || "Test");
-
-                // 4. Build Table
+                const usersMap = {}; uSnap.forEach(d => usersMap[d.id] = d.data().name || d.data().email.split('@')[0]);
+                const testsMap = {}; tSnap.forEach(d => testsMap[d.id] = d.data().title);
                 table.innerHTML = "";
-                if(resSnap.empty) table.innerHTML = "<tr><td colspan='5' class='text-center py-10 text-slate-300'>No results found</td></tr>";
-
-                resSnap.forEach(doc => {
+                rSnap.forEach(doc => {
                     const r = doc.data();
-                    const sName = usersMap[r.userId] || "Guest Student";
-                    const tName = testsMap[r.testId] || "Deleted Test";
                     const date = r.timestamp ? new Date(r.timestamp.seconds * 1000).toLocaleDateString() : 'Now';
-                    
-                    table.innerHTML += `<tr class="border-b border-slate-50 hover:bg-slate-50 transition">
-                        <td class="py-4 text-slate-800 font-bold">${sName}</td>
-                        <td class="py-4 text-slate-400 text-xs">${tName}</td>
-                        <td class="py-4 text-blue-600 font-black">${r.score}</td>
-                        <td class="py-4"><span class="bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-[10px] font-bold">${r.accuracy}%</span></td>
-                        <td class="py-4 text-right text-[10px] text-slate-300 font-bold">${date}</td>
+                    table.innerHTML += `<tr class="border-b border-slate-50 hover:bg-slate-50">
+                        <td class="py-4 font-bold text-slate-700">${usersMap[r.userId] || 'User'}</td>
+                        <td class="py-4 text-slate-400 text-xs">${testsMap[r.testId] || 'Deleted Test'}</td>
+                        <td class="py-4 text-center text-blue-600 font-black">${r.score}</td>
+                        <td class="py-4 text-center"><span class="bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-[10px] font-bold">${r.accuracy}%</span></td>
+                        <td class="py-4 text-right text-[10px] text-slate-300">${date}</td>
                     </tr>`;
                 });
             } catch (e) { console.error(e); }
