@@ -30,7 +30,7 @@
         </form>
 
         <form id="signup-form" class="hidden space-y-4">
-            <input type="text" id="s-name" placeholder="Full Name (e.g. Ayub Janz)" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none" required>
+            <input type="text" id="s-name" placeholder="Full Name (e.g. Student Name)" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none" required>
             <input type="email" id="s-email" placeholder="Email Address" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none" required>
             <input type="password" id="s-password" placeholder="Set Password (Min 6 chars)" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none" required>
             <button type="submit" class="w-full bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700 transition">Create Account</button>
@@ -38,77 +38,100 @@
     </div>
 
     <script type="module">
-        // 1. Config file se taqat lena
         import { auth, db } from "./config.js";
         import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const msgBox = document.getElementById('msg-box');
+        const ADMIN_EMAIL = "mdayubjanz@gmail.com";
 
-        // 2. Tabs Badalne ka Code
+        // Tab Switching
         document.getElementById('tab-login').onclick = () => {
-            document.getElementById('login-form').classList.remove('hidden');
-            document.getElementById('signup-form').classList.add('hidden');
-            document.getElementById('tab-login').classList.add('border-blue-600', 'text-blue-600');
-            document.getElementById('tab-login').classList.remove('text-gray-400');
-            document.getElementById('tab-signup').classList.remove('border-blue-600', 'text-blue-600');
-            document.getElementById('tab-signup').classList.add('text-gray-400');
+            toggleForms('login');
         };
         document.getElementById('tab-signup').onclick = () => {
-            document.getElementById('signup-form').classList.remove('hidden');
-            document.getElementById('login-form').classList.add('hidden');
-            document.getElementById('tab-signup').classList.add('border-blue-600', 'text-blue-600');
-            document.getElementById('tab-signup').classList.remove('text-gray-400');
-            document.getElementById('tab-login').classList.remove('border-blue-600', 'text-blue-600');
-            document.getElementById('tab-login').classList.add('text-gray-400');
+            toggleForms('signup');
         };
 
-        // 3. LOGIN System
+        function toggleForms(type) {
+            if(type === 'login') {
+                document.getElementById('login-form').classList.remove('hidden');
+                document.getElementById('signup-form').classList.add('hidden');
+                document.getElementById('tab-login').className = "w-1/2 pb-2 border-b-2 border-blue-600 font-bold text-blue-600";
+                document.getElementById('tab-signup').className = "w-1/2 pb-2 text-gray-400 font-bold";
+            } else {
+                document.getElementById('signup-form').classList.remove('hidden');
+                document.getElementById('login-form').classList.add('hidden');
+                document.getElementById('tab-signup').className = "w-1/2 pb-2 border-b-2 border-blue-600 font-bold text-blue-600";
+                document.getElementById('tab-login').className = "w-1/2 pb-2 text-gray-400 font-bold";
+            }
+        }
+
+        // 🚀 LOGIN LOGIC
         document.getElementById('login-form').onsubmit = async (e) => {
             e.preventDefault();
-            showMessage("Checking...", "blue");
+            showMessage("Logging in...", "blue");
+            const email = document.getElementById('l-email').value;
+            const pass = document.getElementById('l-password').value;
+
             try {
-                await signInWithEmailAndPassword(auth, document.getElementById('l-email').value, document.getElementById('l-password').value);
-                showMessage("Success! Redirecting...", "green");
-                setTimeout(() => { window.location.href = "dashboard.html"; }, 1000);
+                await signInWithEmailAndPassword(auth, email, pass);
+                handleRedirect(email);
             } catch (err) {
-                let msg = err.message;
-                if(err.code === 'auth/invalid-credential') msg = "Email ya Password galat hai!";
-                showMessage(msg, "red");
+                showMessage("Login Error: " + err.message, "red");
             }
         };
 
-        // 4. SIGNUP System
+        // 🚀 SIGNUP LOGIC (Fixed: Turant Dashboard Khulega)
         document.getElementById('signup-form').onsubmit = async (e) => {
             e.preventDefault();
             showMessage("Creating Account...", "blue");
+            
             const name = document.getElementById('s-name').value;
             const email = document.getElementById('s-email').value;
             const pass = document.getElementById('s-password').value;
 
             try {
-                // Firebase me user banana
+                // 1. Account Create Karo
                 const userCred = await createUserWithEmailAndPassword(auth, email, pass);
-                await updateProfile(userCred.user, { displayName: name });
                 
-                // Database me naam save karna
-                await setDoc(doc(db, "users", userCred.user.uid), {
+                // 2. Display Name Update Karo
+                await updateProfile(userCred.user, { displayName: name });
+
+                // 3. Database me entry (Background me chalne do, wait mat karo)
+                setDoc(doc(db, "users", userCred.user.uid), {
                     name: name,
                     email: email,
                     role: "student",
                     createdAt: new Date()
-                });
+                }).catch(e => console.log("DB Entry Delay"));
 
-                showMessage("Account Created! Login kar rahe hain...", "green");
-                setTimeout(() => { window.location.href = "dashboard.html"; }, 1500);
+                // 4. ✅ SEEDHA DASHBOARD PAR BHEJO
+                showMessage("Account Created! Redirecting...", "green");
+                setTimeout(() => {
+                    window.location.href = "dashboard.html";
+                }, 800); 
+
             } catch (err) {
-                showMessage(err.message, "red");
+                showMessage("Signup Error: " + err.message, "red");
             }
         };
+
+        function handleRedirect(email) {
+            showMessage("Success! Opening Portal...", "green");
+            setTimeout(() => {
+                if (email === ADMIN_EMAIL) {
+                    window.location.href = "admin.html";
+                } else {
+                    window.location.href = "dashboard.html";
+                }
+            }, 800);
+        }
 
         function showMessage(txt, color) {
             msgBox.innerText = txt;
             msgBox.className = `block p-3 rounded mb-4 text-sm text-center bg-${color}-100 text-${color}-700 border border-${color}-400`;
+            msgBox.classList.remove('hidden');
         }
     </script>
 </body>
