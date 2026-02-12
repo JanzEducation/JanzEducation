@@ -30,8 +30,7 @@
             </div>
         </div>
 
-        <h1 class="text-3xl font-black text-slate-800 brand-font tracking-wide mb-1">JANZ EDUCATION</h1>
-        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-[0.3em] mb-10">Lab Assistant 2026</p>
+        <h1 class="text-3xl font-black text-slate-800 brand-font tracking-wide mb-10">JANZ EDUCATION</h1>
 
         <button onclick="loginWithGoogle()" class="w-full bg-white border-2 border-slate-100 text-slate-700 py-4 rounded-2xl font-bold flex items-center justify-center gap-3 hover:bg-slate-50 hover:border-blue-200 transition-all shadow-sm active:scale-95 group mb-6">
             <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="24" class="group-hover:rotate-12 transition-transform">
@@ -55,38 +54,75 @@
     </div>
 
     <div id="loader" class="fixed inset-0 flex items-center justify-center bg-white z-50">
-        <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-blue-900"></div>
+        <div class="text-center">
+            <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-blue-900 mx-auto mb-4"></div>
+            <p class="text-xs font-bold text-blue-900 animate-pulse">Checking Login...</p>
+        </div>
     </div>
 
     <script type="module">
         import { auth, db } from "./config.js";
-        import { GoogleAuthProvider, signInWithRedirect, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { GoogleAuthProvider, signInWithRedirect, getRedirectResult, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // PWA Service Worker Registration
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js');
-        }
+        // PWA Service Worker
+        if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 
-        // 🔄 AUTO-LOGIN CHECK
+        // 🔥 FIX: Redirect Result Checker (जासूस)
+        // यह चेक करता है कि क्या यूजर अभी गूगल से लॉगिन करके लौटा है?
+        const checkRedirect = async () => {
+            try {
+                const result = await getRedirectResult(auth);
+                if (result && result.user) {
+                    console.log("Redirect Login Successful!");
+                    await saveUser(result.user);
+                    window.location.replace("dashboard.html");
+                }
+            } catch (error) {
+                console.error("Redirect Error:", error);
+                // अगर कोई एरर है तो लोडर हटाओ और लॉगिन पेज दिखाओ
+                document.getElementById('loader').style.display = 'none';
+                document.getElementById('login-container').style.display = 'block';
+            }
+        };
+        checkRedirect();
+
+        // 🔄 NORMAL AUTH CHECK
         onAuthStateChanged(auth, async (user) => {
-            const loader = document.getElementById('loader');
-            const loginContainer = document.getElementById('login-container');
-
             if (user) {
-                // User is logged in -> Go to Dashboard immediately
-                window.location.href = "dashboard.html";
+                // अगर यूजर पहले से लॉगिन है
+                await saveUser(user);
+                window.location.replace("dashboard.html");
             } else {
-                // User is NOT logged in -> Show Login Screen
-                loader.style.display = 'none';
-                loginContainer.style.display = 'block';
+                // अगर कोई यूजर नहीं है, तो लोडर हटाओ और पेज दिखाओ
+                // लेकिन थोड़ा रुककर ताकि Redirect Check पूरा हो सके
+                setTimeout(() => {
+                    if(document.getElementById('loader').style.display !== 'none') {
+                       document.getElementById('loader').style.display = 'none';
+                       document.getElementById('login-container').style.display = 'block';
+                    }
+                }, 2000);
             }
         });
 
-        // 🚀 GOOGLE LOGIN (Mobile Optimized)
+        // Save User Helper Function
+        async function saveUser(user) {
+            const userRef = doc(db, "users", user.uid);
+            const snap = await getDoc(userRef);
+            if(!snap.exists()) {
+                await setDoc(userRef, {
+                    name: user.displayName, email: user.email,
+                    photo: user.photoURL, createdAt: serverTimestamp()
+                });
+            }
+        }
+
+        // 🚀 BUTTON ACTION
         window.loginWithGoogle = () => {
             const provider = new GoogleAuthProvider();
-            // Removed 'select_account' to allow smoother re-logins if needed
+            // provider.setCustomParameters({ prompt: 'select_account' }); // Auto-login enabled
+            document.getElementById('login-container').style.display = 'none';
+            document.getElementById('loader').style.display = 'flex';
             signInWithRedirect(auth, provider); 
         };
 
@@ -95,13 +131,10 @@
             const email = document.getElementById('email').value;
             const pass = document.getElementById('password').value;
             if(!email || !pass) return alert("Please fill all fields");
-
             try {
                 await signInWithEmailAndPassword(auth, email, pass);
-                window.location.href = "dashboard.html";
-            } catch (error) {
-                alert("Error: " + error.message);
-            }
+                window.location.replace("dashboard.html");
+            } catch (error) { alert("Error: " + error.message); }
         };
     </script>
 </body>
