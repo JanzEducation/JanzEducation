@@ -1,44 +1,108 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8"><title>Admin JSON Upload | Janz Education</title>
+    <meta charset="UTF-8"><title>Admin Master | Janz Education</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 </head>
 <body class="bg-slate-100 font-['Poppins'] p-5 hidden" id="admin-body">
-    <div class="max-w-3xl mx-auto bg-white p-8 rounded-2xl shadow-lg border-t-8 border-blue-900">
-        <h1 class="text-2xl font-bold text-blue-900 mb-2">JSON Master Uploader 🚀</h1>
-        <p class="text-sm text-gray-500 mb-6">यहाँ अपना टेस्ट JSON पेस्ट करें, सिस्टम अपने आप Exam, Subject और Chapter फोल्डर बना देगा।</p>
+    
+    <div class="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        <textarea id="json-input" rows="15" class="w-full p-4 border rounded-xl font-mono text-sm bg-gray-50 mb-4" placeholder='Paste your Test JSON here...'></textarea>
-        
-        <button onclick="uploadJSON()" class="w-full bg-blue-900 text-white py-4 rounded-xl font-bold hover:bg-yellow-500 hover:text-black transition">PUBLISH TEST AUTOMATICALLY</button>
+        <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-lg border-t-8 border-blue-900">
+            <div class="flex justify-between items-center mb-4">
+                <h1 class="text-xl font-bold text-blue-900">JSON Master Uploader 🚀</h1>
+                <button onclick="clearForm()" class="text-xs bg-gray-100 px-3 py-1 rounded-lg hover:bg-gray-200">Reset Form</button>
+            </div>
+            
+            <textarea id="json-input" rows="12" class="w-full p-4 border rounded-xl font-mono text-xs bg-gray-50 mb-4 focus:ring-2 focus:ring-blue-500 outline-none" placeholder='Paste your Test JSON here...'></textarea>
+            
+            <button id="upload-btn" onclick="uploadJSON()" class="w-full bg-blue-900 text-white py-4 rounded-xl font-bold hover:bg-yellow-500 hover:text-black transition">
+                PUBLISH TEST NOW
+            </button>
+            
+            <button onclick="window.location.href='dashboard.html'" class="w-full mt-3 text-sm text-gray-500 hover:underline text-center">Back to Dashboard</button>
+        </div>
+
+        <div class="bg-white p-6 rounded-2xl shadow-md border-t-4 border-yellow-400">
+            <h2 class="font-bold text-slate-800 mb-4 flex items-center gap-2">📂 Recent Uploads</h2>
+            <div id="uploads-list" class="space-y-3 max-h-[500px] overflow-y-auto pr-2">
+                <p class="text-xs text-gray-400 text-center py-10">No tests uploaded yet.</p>
+            </div>
+        </div>
+
     </div>
 
     <script type="module">
         import { auth, db } from "./config.js";
         import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { collection, addDoc, serverTimestamp, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const ADMIN_EMAIL = "mdayubjanz@gmail.com"; 
+        
         onAuthStateChanged(auth, (user) => {
-            if (user && user.email === ADMIN_EMAIL) document.getElementById('admin-body').classList.remove('hidden');
-            else window.location.href = "dashboard.html";
+            if (user && user.email === ADMIN_EMAIL) {
+                document.getElementById('admin-body').classList.remove('hidden');
+                loadRecentUploads(); // List load karo
+            } else {
+                window.location.href = "dashboard.html";
+            }
         });
 
+        // 🚀 Upload Logic
         window.uploadJSON = async () => {
+            const btn = document.getElementById('upload-btn');
+            const input = document.getElementById('json-input');
+            
             try {
-                const data = JSON.parse(document.getElementById('json-input').value);
-                if(!data.exam || !data.questions) throw new Error("JSON missing exam or questions!");
+                const data = JSON.parse(input.value);
+                if(!data.exam || !data.questions) throw new Error("JSON invalid!");
+
+                btn.innerText = "Publishing...";
+                btn.disabled = true;
 
                 await addDoc(collection(db, "tests"), {
                     ...data,
                     totalQuestions: data.questions.length,
                     createdAt: serverTimestamp()
                 });
-                alert("✅ Test Added to " + data.exam + " Folder!");
-                document.getElementById('json-input').value = "";
-            } catch (err) { alert("❌ Invalid JSON: " + err.message); }
+
+                alert("✅ Success! Test added to " + data.exam);
+                input.value = ""; // Clear form for next upload
+                loadRecentUploads(); // Refresh list
+            } catch (err) { 
+                alert("❌ Error: " + err.message); 
+            } finally {
+                btn.innerText = "PUBLISH TEST NOW";
+                btn.disabled = false;
+            }
+        };
+
+        // 📂 List Loading Logic
+        async function loadRecentUploads() {
+            const list = document.getElementById('uploads-list');
+            try {
+                const q = query(collection(db, "tests"), orderBy("createdAt", "desc"), limit(10));
+                const snap = await getDocs(q);
+                
+                if(snap.empty) return;
+                
+                list.innerHTML = "";
+                snap.forEach(doc => {
+                    const test = doc.data();
+                    list.innerHTML += `
+                        <div class="p-3 bg-slate-50 border rounded-lg">
+                            <p class="text-[10px] font-bold text-blue-600 uppercase">${test.exam}</p>
+                            <p class="text-sm font-bold text-slate-800 leading-tight">${test.title}</p>
+                            <p class="text-[10px] text-gray-400 mt-1">${test.subject} • ${test.questions.length} Qs</p>
+                        </div>
+                    `;
+                });
+            } catch (e) { console.log(e); }
+        }
+
+        window.clearForm = () => {
+            if(confirm("Form clear karein?")) document.getElementById('json-input').value = "";
         };
     </script>
 </body>
