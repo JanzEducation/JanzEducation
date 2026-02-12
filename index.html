@@ -1,110 +1,104 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="hi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Janz Education | Portal</title>
+    <title>Janz Education | Login</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-    <style>body { font-family: 'Poppins', sans-serif; }</style>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Poppins', sans-serif; background: #f8fafc; }
+        .glass-card { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); }
+    </style>
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+<body class="min-h-screen flex items-center justify-center p-6">
 
-    <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md">
-        <div class="text-center mb-6">
-            <h1 class="text-3xl font-bold text-blue-900">JANZ EDUCATION</h1>
-            <p class="text-gray-500 text-sm">Login or Create Account</p>
+    <div class="max-w-md w-full glass-card p-10 rounded-[3rem] shadow-2xl border border-white text-center">
+        <div class="mb-8">
+            <div class="w-20 h-20 bg-blue-900 rounded-3xl mx-auto flex items-center justify-center shadow-lg mb-4">
+                <span class="text-3xl font-black text-yellow-400">J</span>
+            </div>
+            <h1 class="text-3xl font-black text-slate-900 tracking-tighter uppercase italic">Janz Education</h1>
+            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-[0.3em] mt-1">Lab Assistant 2026</p>
         </div>
 
-        <div id="msg-box" class="hidden p-3 rounded mb-4 text-sm text-center"></div>
+        <button onclick="loginWithGoogle()" class="w-full bg-white border-2 border-slate-100 text-slate-700 py-4 rounded-2xl font-bold flex items-center justify-center gap-3 hover:bg-slate-50 hover:border-blue-200 transition-all shadow-sm active:scale-95 group">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="22" class="group-hover:rotate-12 transition-transform">
+            <span class="text-sm">Continue with Google</span>
+        </button>
 
-        <div class="flex border-b mb-4">
-            <button id="tab-login" class="w-1/2 pb-2 border-b-2 border-blue-600 font-bold text-blue-600">Login</button>
-            <button id="tab-signup" class="w-1/2 pb-2 text-gray-400 font-bold">New Account</button>
+        <div class="my-10 flex items-center gap-4 text-slate-200">
+            <div class="h-[1px] bg-slate-200 flex-1"></div>
+            <span class="text-[9px] font-black text-slate-300 uppercase tracking-widest">OR Login Via Email</span>
+            <div class="h-[1px] bg-slate-200 flex-1"></div>
         </div>
 
-        <form id="login-form" class="space-y-4">
-            <input type="email" id="l-email" placeholder="Email Address" class="w-full p-3 border rounded-lg outline-none" required>
-            <input type="password" id="l-password" placeholder="Password" class="w-full p-3 border rounded-lg outline-none" required>
-            <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold">Login Now</button>
-        </form>
+        <div class="space-y-4">
+            <input type="email" id="email" placeholder="Email Address" class="w-full p-4 bg-slate-50 border-2 border-transparent rounded-2xl text-sm outline-none focus:border-blue-900 focus:bg-white transition-all">
+            <input type="password" id="password" placeholder="Password" class="w-full p-4 bg-slate-50 border-2 border-transparent rounded-2xl text-sm outline-none focus:border-blue-900 focus:bg-white transition-all">
+            
+            <button onclick="loginEmail()" class="w-full bg-blue-900 text-white py-4 rounded-2xl font-bold text-xs shadow-xl shadow-blue-100 hover:bg-black transition-all uppercase tracking-widest">Login to Dashboard</button>
+        </div>
 
-        <form id="signup-form" class="hidden space-y-4">
-            <input type="text" id="s-name" placeholder="Full Name" class="w-full p-3 border rounded-lg outline-none" required>
-            <input type="email" id="s-email" placeholder="Email Address" class="w-full p-3 border rounded-lg outline-none" required>
-            <input type="password" id="s-password" placeholder="Set Password" class="w-full p-3 border rounded-lg outline-none" required>
-            <button type="submit" class="w-full bg-green-600 text-white py-3 rounded-lg font-bold">Create Account</button>
-        </form>
+        <p class="mt-10 text-[9px] text-slate-400 font-medium">
+            By signing in, you agree to our <br>
+            <a href="#" class="text-blue-600 font-bold hover:underline">Privacy Policy</a> & <a href="#" class="text-blue-600 font-bold hover:underline">Terms of Service</a>
+        </p>
     </div>
 
     <script type="module">
         import { auth, db } from "./config.js";
-        import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, browserPopupRedirectResolver } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        const msgBox = document.getElementById('msg-box');
-        const ADMIN_EMAIL = "mdayubjanz@gmail.com";
-
-        // Tab Switching
-        document.getElementById('tab-login').onclick = () => {
-            document.getElementById('login-form').classList.remove('hidden');
-            document.getElementById('signup-form').classList.add('hidden');
-            document.getElementById('tab-login').className = "w-1/2 pb-2 border-b-2 border-blue-600 font-bold text-blue-600";
-            document.getElementById('tab-signup').className = "w-1/2 pb-2 text-gray-400 font-bold";
-        };
-
-        document.getElementById('tab-signup').onclick = () => {
-            document.getElementById('signup-form').classList.remove('hidden');
-            document.getElementById('login-form').classList.add('hidden');
-            document.getElementById('tab-signup').className = "w-1/2 pb-2 border-b-2 border-blue-600 font-bold text-blue-600";
-            document.getElementById('tab-login').className = "w-1/2 pb-2 text-gray-400 font-bold";
-        };
-
-        // LOGIN
-        document.getElementById('login-form').onsubmit = async (e) => {
-            e.preventDefault();
-            showMessage("Logging in...", "blue");
-            try {
-                const email = document.getElementById('l-email').value;
-                await signInWithEmailAndPassword(auth, email, document.getElementById('l-password').value);
-                window.location.href = (email === ADMIN_EMAIL) ? "admin.html" : "dashboard.html";
-            } catch (err) { showMessage(err.message, "red"); }
-        };
-
-        // 🚀 FAST SIGNUP (Ab nahi atkega)
-        document.getElementById('signup-form').onsubmit = async (e) => {
-            e.preventDefault();
-            showMessage("Processing...", "blue");
-            
-            const name = document.getElementById('s-name').value;
-            const email = document.getElementById('s-email').value;
-            const pass = document.getElementById('s-password').value;
+        // 🚀 PROFESSIONAL GOOGLE LOGIN
+        window.loginWithGoogle = async () => {
+            const provider = new GoogleAuthProvider();
+            // Force account selection so it always shows the list of emails
+            provider.setCustomParameters({ prompt: 'select_account' });
 
             try {
-                // 1. Account Banao
-                const userCred = await createUserWithEmailAndPassword(auth, email, pass);
+                // Using Popup for that "App-like" feel
+                const result = await signInWithPopup(auth, provider, browserPopupRedirectResolver);
+                const user = result.user;
+
+                // Create user record in Firestore if it doesn't exist
+                const userRef = doc(db, "users", user.uid);
+                const snap = await getDoc(userRef);
+
+                if(!snap.exists()) {
+                    await setDoc(userRef, {
+                        name: user.displayName,
+                        email: user.email,
+                        photo: user.photoURL,
+                        role: "student",
+                        createdAt: serverTimestamp()
+                    });
+                }
                 
-                // 2. Name Update Karo
-                await updateProfile(userCred.user, { displayName: name });
-
-                // 3. Database me Background me save karo (Don't use 'await' here)
-                setDoc(doc(db, "users", userCred.user.uid), {
-                    name: name, email: email, role: "student", createdAt: new Date()
-                }).catch(e => console.log("DB Skip"));
-
-                // 4. ✅ SEEDHA BHEJO (Wait mat karo)
+                // Success redirect
                 window.location.href = "dashboard.html";
-
-            } catch (err) {
-                showMessage(err.message, "red");
+            } catch (error) {
+                console.error(error);
+                if(error.code !== 'auth/popup-closed-by-user') {
+                    alert("Google Login Error: " + error.message);
+                }
             }
         };
 
-        function showMessage(txt, color) {
-            msgBox.innerText = txt;
-            msgBox.className = `block p-3 rounded mb-4 text-sm text-center bg-${color}-100 text-${color}-700 border border-${color}-400`;
-            msgBox.classList.remove('hidden');
-        }
+        // 📧 CLASSIC EMAIL LOGIN
+        window.loginEmail = async () => {
+            const email = document.getElementById('email').value;
+            const pass = document.getElementById('password').value;
+            if(!email || !pass) return alert("Please fill all fields");
+
+            try {
+                await signInWithEmailAndPassword(auth, email, pass);
+                window.location.href = "dashboard.html";
+            } catch (error) {
+                alert("Login Error: " + error.message);
+            }
+        };
     </script>
 </body>
 </html>
