@@ -1,0 +1,16 @@
+{
+  "name": "Janz Education",
+  "short_name": "JanzEdu",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1e3a8a",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/2997/2997235.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
