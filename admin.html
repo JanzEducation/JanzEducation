@@ -1,13 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8"><title>Admin Master | Janz Education</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Master | Janz Education</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Poppins', sans-serif; }</style>
 </head>
-<body class="bg-slate-100 font-['Poppins'] p-5 hidden" id="admin-body">
+<body class="bg-slate-100 p-5 hidden" id="admin-body">
     
-    <div class="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-lg border-t-8 border-blue-900">
             <div class="flex justify-between items-center mb-4">
@@ -15,19 +18,22 @@
                 <button onclick="clearForm()" class="text-xs bg-gray-100 px-3 py-1 rounded-lg hover:bg-gray-200">Reset Form</button>
             </div>
             
-            <textarea id="json-input" rows="12" class="w-full p-4 border rounded-xl font-mono text-xs bg-gray-50 mb-4 focus:ring-2 focus:ring-blue-500 outline-none" placeholder='Paste your Test JSON here...'></textarea>
+            <textarea id="json-input" rows="15" class="w-full p-4 border rounded-xl font-mono text-xs bg-gray-50 mb-4 focus:ring-2 focus:ring-blue-500 outline-none" placeholder='Paste your Test JSON here...'></textarea>
             
-            <button id="upload-btn" onclick="uploadJSON()" class="w-full bg-blue-900 text-white py-4 rounded-xl font-bold hover:bg-yellow-500 hover:text-black transition">
+            <button id="upload-btn" onclick="uploadJSON()" class="w-full bg-blue-900 text-white py-4 rounded-xl font-bold hover:bg-yellow-500 hover:text-black transition shadow-lg">
                 PUBLISH TEST NOW
             </button>
             
-            <button onclick="window.location.href='dashboard.html'" class="w-full mt-3 text-sm text-gray-500 hover:underline text-center">Back to Dashboard</button>
+            <div class="flex justify-center gap-6 mt-4">
+                <button onclick="window.location.href='dashboard.html'" class="text-sm text-blue-600 hover:underline">Go to Dashboard</button>
+                <button onclick="loadRecentUploads()" class="text-sm text-gray-500 hover:underline">Refresh List 🔄</button>
+            </div>
         </div>
 
         <div class="bg-white p-6 rounded-2xl shadow-md border-t-4 border-yellow-400">
             <h2 class="font-bold text-slate-800 mb-4 flex items-center gap-2">📂 Recent Uploads</h2>
-            <div id="uploads-list" class="space-y-3 max-h-[500px] overflow-y-auto pr-2">
-                <p class="text-xs text-gray-400 text-center py-10">No tests uploaded yet.</p>
+            <div id="uploads-list" class="space-y-3 max-h-[600px] overflow-y-auto pr-2">
+                <p class="text-xs text-gray-400 text-center py-10">Loading database...</p>
             </div>
         </div>
 
@@ -38,29 +44,37 @@
         import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { collection, addDoc, serverTimestamp, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+        // 👑 ADMIN EMAIL CHECK
         const ADMIN_EMAIL = "mdayubjanz@gmail.com"; 
         
         onAuthStateChanged(auth, (user) => {
             if (user && user.email === ADMIN_EMAIL) {
                 document.getElementById('admin-body').classList.remove('hidden');
-                loadRecentUploads(); // List load karo
+                loadRecentUploads(); // Page khulte hi list load karo
             } else {
                 window.location.href = "dashboard.html";
             }
         });
 
-        // 🚀 Upload Logic
+        // 🚀 UPLOAD LOGIC
         window.uploadJSON = async () => {
             const btn = document.getElementById('upload-btn');
             const input = document.getElementById('json-input');
             
+            if(!input.value.trim()) return alert("Please paste JSON first!");
+
             try {
                 const data = JSON.parse(input.value);
-                if(!data.exam || !data.questions) throw new Error("JSON invalid!");
+                
+                // Basic Validation
+                if(!data.exam || !data.subject || !data.questions) {
+                    throw new Error("JSON must have exam, subject, and questions!");
+                }
 
-                btn.innerText = "Publishing...";
+                btn.innerText = "Processing...";
                 btn.disabled = true;
 
+                // Firestore me save karna
                 await addDoc(collection(db, "tests"), {
                     ...data,
                     totalQuestions: data.questions.length,
@@ -68,41 +82,57 @@
                 });
 
                 alert("✅ Success! Test added to " + data.exam);
-                input.value = ""; // Clear form for next upload
-                loadRecentUploads(); // Refresh list
+                input.value = ""; // Form saaf karein
+                loadRecentUploads(); // List update karein
+                
             } catch (err) { 
                 alert("❌ Error: " + err.message); 
+                console.error(err);
             } finally {
                 btn.innerText = "PUBLISH TEST NOW";
                 btn.disabled = false;
             }
         };
 
-        // 📂 List Loading Logic
-        async function loadRecentUploads() {
+        // 📂 RECENT LIST LOGIC
+        window.loadRecentUploads = async () => {
             const list = document.getElementById('uploads-list');
             try {
                 const q = query(collection(db, "tests"), orderBy("createdAt", "desc"), limit(10));
                 const snap = await getDocs(q);
                 
-                if(snap.empty) return;
-                
                 list.innerHTML = "";
+                
+                if(snap.empty) {
+                    list.innerHTML = "<p class='text-xs text-gray-400 text-center py-10'>No tests found in Database.</p>";
+                    return;
+                }
+                
                 snap.forEach(doc => {
                     const test = doc.data();
+                    const date = test.createdAt ? new Date(test.createdAt.seconds * 1000).toLocaleDateString() : 'Just now';
+                    
                     list.innerHTML += `
-                        <div class="p-3 bg-slate-50 border rounded-lg">
-                            <p class="text-[10px] font-bold text-blue-600 uppercase">${test.exam}</p>
+                        <div class="p-3 bg-slate-50 border rounded-lg hover:shadow-sm transition">
+                            <p class="text-[10px] font-bold text-blue-600 uppercase tracking-tighter">${test.exam}</p>
                             <p class="text-sm font-bold text-slate-800 leading-tight">${test.title}</p>
-                            <p class="text-[10px] text-gray-400 mt-1">${test.subject} • ${test.questions.length} Qs</p>
+                            <div class="flex justify-between items-center mt-2">
+                                <span class="text-[10px] text-gray-400">${test.subject} • ${test.questions ? test.questions.length : 0} Qs</span>
+                                <span class="text-[9px] text-slate-300 font-bold">${date}</span>
+                            </div>
                         </div>
                     `;
                 });
-            } catch (e) { console.log(e); }
+            } catch (e) { 
+                console.error("List Error: ", e);
+                list.innerHTML = "<p class='text-xs text-red-400 text-center py-10 font-bold'>⚠️ Database Error!<br>Check Firebase Rules.</p>";
+            }
         }
 
         window.clearForm = () => {
-            if(confirm("Form clear karein?")) document.getElementById('json-input').value = "";
+            if(confirm("Are you sure you want to reset the form?")) {
+                document.getElementById('json-input').value = "";
+            }
         };
     </script>
 </body>
