@@ -19,13 +19,7 @@
 </head>
 <body class="min-h-screen flex items-center justify-center p-6 bg-slate-100">
 
-    <div id="loader" class="fixed inset-0 flex flex-col items-center justify-center bg-slate-50 z-50">
-        <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-900 mb-4"></div>
-        <h2 class="text-blue-900 font-bold text-lg brand-font animate-pulse">JANZ EDUCATION</h2>
-        <p class="text-xs text-slate-400 font-bold uppercase tracking-widest mt-2">Checking Login...</p>
-    </div>
-
-    <div id="login-container" style="display:none;" class="max-w-md w-full glass-card p-10 rounded-[3rem] shadow-2xl border border-white text-center relative overflow-hidden">
+    <div class="max-w-md w-full glass-card p-10 rounded-[3rem] shadow-2xl border border-white text-center relative overflow-hidden">
         
         <div class="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-blue-50 to-transparent -z-10"></div>
 
@@ -59,85 +53,52 @@
 
     <script type="module">
         import { auth, db } from "./config.js";
-        import { GoogleAuthProvider, signInWithRedirect, getRedirectResult, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { GoogleAuthProvider, signInWithRedirect, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // PWA
+        // PWA Setup
         if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 
-        // 🔥 MAIN STABLE LOGIC 🔥
+        // 🔥 SIMPLE & SOLID LOGIC 🔥
         
-        // 1. Google Redirect Result Check (वापसी चेक करें)
-        getRedirectResult(auth)
-            .then(async (result) => {
-                if (result && result.user) {
-                    console.log("Redirect Login Success");
-                    await saveUser(result.user);
-                    window.location.replace("dashboard.html");
-                }
-            })
-            .catch((error) => {
-                console.error("Login Error:", error);
-                alert("Login Error: " + error.message);
-                // एरर आया तो लोडर हटाओ, लॉगिन दिखाओ
-                document.getElementById('loader').style.display = 'none';
-                document.getElementById('login-container').style.display = 'block';
-            });
-
-        // 2. Auth State Check (क्या पहले से लॉगिन है?)
+        // यह सबसे भरोसेमंद तरीका है।
+        // जैसे ही गूगल से लॉगिन कन्फर्म होगा, यह अपने आप चल पड़ेगा।
         onAuthStateChanged(auth, async (user) => {
             if (user) {
-                // अगर यूजर है -> तो डैशबोर्ड भेजो
-                await saveUser(user);
-                window.location.replace("dashboard.html");
-            } else {
-                // अगर यूजर नहीं है -> लोडर हटाओ और लॉगिन दिखाओ
-                // (थोड़ा रुक कर ताकि Redirect वाला चेक पूरा हो सके)
-                setTimeout(() => {
-                    document.getElementById('loader').style.display = 'none';
-                    document.getElementById('login-container').style.display = 'block';
-                }, 1000);
+                console.log("User Logged In:", user.email);
+                
+                // डेटाबेस में यूजर सेव करो
+                const userRef = doc(db, "users", user.uid);
+                // merge: true मतलब अगर पहले से है तो कुछ मत बिगाड़ो
+                await setDoc(userRef, {
+                    name: user.displayName, 
+                    email: user.email,
+                    photo: user.photoURL,
+                    lastLogin: serverTimestamp()
+                }, { merge: true });
+
+                // सीधा डैशबोर्ड भेजो
+                window.location.href = "dashboard.html";
             }
+            // अगर यूजर नहीं है, तो कुछ मत करो (लॉगिन पेज अपने आप दिखेगा)
         });
 
-        // User Save Helper
-        async function saveUser(user) {
-            const userRef = doc(db, "users", user.uid);
-            // merge: true का मतलब है पुराना डेटा न उड़े, बस नया जुड़े
-            await setDoc(userRef, {
-                name: user.displayName, 
-                email: user.email,
-                photo: user.photoURL,
-                lastLogin: serverTimestamp()
-            }, { merge: true });
-        }
-
-        // 🚀 Google Button Action
+        // 🚀 Google Login Action
         window.loginWithGoogle = () => {
             const provider = new GoogleAuthProvider();
-            // बटन दबाते ही लोडर वापस लाओ
-            document.getElementById('login-container').style.display = 'none';
-            document.getElementById('loader').style.display = 'flex';
+            // Redirect वाला तरीका ही रखेंगे क्योंकि यह मोबाइल पर बेस्ट है
             signInWithRedirect(auth, provider);
         };
 
-        // 📧 Email Login
+        // 📧 Email Login Action
         window.loginEmail = async () => {
             const email = document.getElementById('email').value;
             const pass = document.getElementById('password').value;
-            if(!email || !pass) return alert("Please fill all fields");
-            
-            document.getElementById('login-container').style.display = 'none';
-            document.getElementById('loader').style.display = 'flex';
-            
+            if(!email || !pass) return alert("Please fill details");
             try {
                 await signInWithEmailAndPassword(auth, email, pass);
-                window.location.replace("dashboard.html");
-            } catch (error) {
-                alert("Error: " + error.message);
-                document.getElementById('loader').style.display = 'none';
-                document.getElementById('login-container').style.display = 'block';
-            }
+                // AuthStateChanged अपने आप रीडायरेक्ट कर देगा
+            } catch (error) { alert("Error: " + error.message); }
         };
     </script>
 </body>
