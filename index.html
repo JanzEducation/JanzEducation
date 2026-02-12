@@ -53,51 +53,60 @@
 
     <script type="module">
         import { auth, db } from "./config.js";
-        import { GoogleAuthProvider, signInWithRedirect, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { GoogleAuthProvider, signInWithRedirect, getRedirectResult, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // PWA Setup
+        // PWA (App Install)
         if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 
-        // 🔥 SIMPLE & SOLID LOGIC 🔥
-        
-        // यह सबसे भरोसेमंद तरीका है।
-        // जैसे ही गूगल से लॉगिन कन्फर्म होगा, यह अपने आप चल पड़ेगा।
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                console.log("User Logged In:", user.email);
-                
-                // डेटाबेस में यूजर सेव करो
-                const userRef = doc(db, "users", user.uid);
-                // merge: true मतलब अगर पहले से है तो कुछ मत बिगाड़ो
-                await setDoc(userRef, {
-                    name: user.displayName, 
-                    email: user.email,
-                    photo: user.photoURL,
-                    lastLogin: serverTimestamp()
-                }, { merge: true });
-
-                // सीधा डैशबोर्ड भेजो
-                window.location.href = "dashboard.html";
-            }
-            // अगर यूजर नहीं है, तो कुछ मत करो (लॉगिन पेज अपने आप दिखेगा)
-        });
-
-        // 🚀 Google Login Action
+        // 🔥 1. GOOGLE LOGIN BUTTON FUNCTION
         window.loginWithGoogle = () => {
             const provider = new GoogleAuthProvider();
-            // Redirect वाला तरीका ही रखेंगे क्योंकि यह मोबाइल पर बेस्ट है
+            // यह लाइन वापस जोड़ दी है ताकि हमेशा ईमेल की लिस्ट आए
+            provider.setCustomParameters({ prompt: 'select_account' });
             signInWithRedirect(auth, provider);
         };
 
-        // 📧 Email Login Action
+        // 🔥 2. LOGIN SUCCESS CHECKER
+        // यह कोड तभी चलेगा जब यूजर लॉगिन करके वापस आएगा
+        getRedirectResult(auth)
+            .then(async (result) => {
+                if (result && result.user) {
+                    await saveUser(result.user);
+                    window.location.href = "dashboard.html";
+                }
+            })
+            .catch((error) => console.log(error));
+
+        // 🔥 3. OLD USER CHECK (Simple)
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                // अगर पहले से लॉगिन है तो डैशबोर्ड भेज दो
+                await saveUser(user);
+                window.location.href = "dashboard.html";
+            }
+            // अगर लॉगिन नहीं है, तो कुछ मत करो। लॉगिन स्क्रीन अपने आप दिखेगी।
+        });
+
+        // User Data Save
+        async function saveUser(user) {
+            const userRef = doc(db, "users", user.uid);
+            await setDoc(userRef, {
+                name: user.displayName, 
+                email: user.email,
+                photo: user.photoURL,
+                lastLogin: serverTimestamp()
+            }, { merge: true });
+        }
+
+        // Email Login
         window.loginEmail = async () => {
             const email = document.getElementById('email').value;
             const pass = document.getElementById('password').value;
             if(!email || !pass) return alert("Please fill details");
             try {
                 await signInWithEmailAndPassword(auth, email, pass);
-                // AuthStateChanged अपने आप रीडायरेक्ट कर देगा
+                window.location.href = "dashboard.html";
             } catch (error) { alert("Error: " + error.message); }
         };
     </script>
