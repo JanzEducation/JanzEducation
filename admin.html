@@ -1,68 +1,164 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Master | Janz Education</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Control | Janz Education</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Poppins', sans-serif; background: #f8fafc; }</style>
 </head>
-<body class="bg-slate-100 p-5 font-['Poppins'] hidden" id="admin-body">
-    <div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-lg border-t-8 border-blue-900">
-            <h1 class="text-xl font-bold text-blue-900 mb-4">JSON Master Uploader 🚀</h1>
-            <textarea id="json-input" rows="15" class="w-full p-4 border rounded-xl font-mono text-xs bg-gray-50 mb-4 outline-none" placeholder="Paste JSON here..."></textarea>
-            <button id="upload-btn" onclick="uploadJSON()" class="w-full bg-blue-900 text-white py-4 rounded-xl font-bold">PUBLISH TEST NOW</button>
-            <p id="status" class="mt-4 text-center text-sm font-bold"></p>
+<body class="p-4 md:p-8 hidden" id="admin-body">
+
+    <div class="max-w-6xl mx-auto space-y-8">
+        
+        <div class="flex justify-between items-center bg-blue-900 p-6 rounded-2xl shadow-xl text-white">
+            <div>
+                <h1 class="text-2xl font-black text-yellow-400">JANZ ADMIN PANEL</h1>
+                <p class="text-xs opacity-80">Manage Tests & Student Performance</p>
+            </div>
+            <button onclick="window.location.href='dashboard.html'" class="bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm font-bold transition">Dashboard 🏠</button>
         </div>
-        <div class="bg-white p-6 rounded-2xl shadow-md border-t-4 border-yellow-400">
-            <h2 class="font-bold mb-4 italic">Recent Uploads 📂</h2>
-            <div id="uploads-list" class="space-y-3"></div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="font-bold text-slate-800 uppercase tracking-wider text-sm">Upload New Test (JSON)</h2>
+                    <button onclick="document.getElementById('json-input').value=''" class="text-[10px] text-red-500 font-bold hover:underline">Clear Area</button>
+                </div>
+                <textarea id="json-input" rows="12" class="w-full p-4 border border-slate-100 rounded-xl font-mono text-xs bg-slate-50 mb-4 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Paste your Test JSON here..."></textarea>
+                <button id="upload-btn" onclick="uploadJSON()" class="w-full bg-blue-900 text-white py-4 rounded-xl font-bold hover:bg-yellow-500 hover:text-black transition shadow-lg uppercase tracking-widest text-sm">Publish Test Now 🚀</button>
+                <p id="upload-status" class="mt-3 text-center text-xs font-bold"></p>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <h2 class="font-bold text-slate-800 mb-4 text-sm flex items-center gap-2">📂 RECENT TESTS</h2>
+                <div id="uploads-list" class="space-y-3 max-h-[400px] overflow-y-auto pr-2">
+                    <p class="text-center text-gray-400 text-xs py-10 tracking-widest">Checking Database...</p>
+                </div>
+            </div>
+
         </div>
+
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="font-bold text-slate-800 uppercase tracking-wider text-sm">🏆 Student Results & Accuracy</h2>
+                <button onclick="loadData()" class="text-blue-600 font-bold text-xs hover:bg-blue-50 px-3 py-1 rounded">Refresh All 🔄</button>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead>
+                        <tr class="text-slate-400 text-[10px] font-bold border-b uppercase">
+                            <th class="pb-3">Student Name</th>
+                            <th class="pb-3">Exam/Test</th>
+                            <th class="pb-3">Score</th>
+                            <th class="pb-3">Accuracy</th>
+                            <th class="pb-3 text-right">Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="results-table" class="text-sm font-semibold">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+
     </div>
+
     <script type="module">
         import { auth, db } from "./config.js";
         import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { collection, addDoc, serverTimestamp, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { collection, addDoc, getDocs, query, orderBy, limit, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const ADMIN_EMAIL = "mdayubjanz@gmail.com"; 
 
         onAuthStateChanged(auth, (user) => {
-            if (user && user.email === "mdayubjanz@gmail.com") {
+            if (user && user.email === ADMIN_EMAIL) {
                 document.getElementById('admin-body').classList.remove('hidden');
-                loadList();
-            } else { window.location.href = "index.html"; }
+                loadData();
+            } else {
+                window.location.href = "index.html";
+            }
         });
 
+        // RE-FETCH ALL DATA
+        window.loadData = () => {
+            loadRecentUploads();
+            loadStudentResults();
+        };
+
+        // 🚀 UPLOAD LOGIC
         window.uploadJSON = async () => {
             const btn = document.getElementById('upload-btn');
-            const status = document.getElementById('status');
             const input = document.getElementById('json-input');
+            const status = document.getElementById('upload-status');
+            
+            if(!input.value.trim()) return alert("JSON Area Khali Hai!");
+
             try {
                 const data = JSON.parse(input.value);
                 btn.innerText = "Processing..."; btn.disabled = true;
-                status.innerText = "⏳ Connecting to Database...";
-                
-                await addDoc(collection(db, "tests"), { ...data, createdAt: serverTimestamp() });
-                
-                status.innerText = "✅ Published Successfully!";
-                status.className = "mt-4 text-center text-sm font-bold text-green-600";
-                input.value = ""; loadList();
+                status.innerText = "Connecting to Firebase...";
+
+                await addDoc(collection(db, "tests"), {
+                    ...data,
+                    totalQuestions: data.questions.length,
+                    createdAt: serverTimestamp()
+                });
+
+                status.innerText = "✅ Test Published Successfully!";
+                status.className = "mt-3 text-center text-xs font-bold text-green-600";
+                input.value = ""; loadData();
             } catch (err) {
                 status.innerText = "❌ Error: " + err.message;
-                status.className = "mt-4 text-center text-sm font-bold text-red-600";
-                alert("Check JSON or Rules!");
+                status.className = "mt-3 text-center text-xs font-bold text-red-600";
+                alert("Check JSON Formatting!");
             } finally {
-                btn.innerText = "PUBLISH TEST NOW"; btn.disabled = false;
+                btn.innerText = "Publish Test Now 🚀"; btn.disabled = false;
             }
         };
 
-        async function loadList() {
+        // 📂 LOAD RECENT TESTS
+        async function loadRecentUploads() {
             const list = document.getElementById('uploads-list');
-            const q = query(collection(db, "tests"), orderBy("createdAt", "desc"), limit(5));
+            const q = query(collection(db, "tests"), orderBy("createdAt", "desc"), limit(10));
             const snap = await getDocs(q);
             list.innerHTML = "";
             snap.forEach(doc => {
                 const t = doc.data();
-                list.innerHTML += `<div class='p-2 bg-gray-50 border rounded mb-2 text-xs'><b>${t.title}</b><br>${t.exam}</div>`;
+                list.innerHTML += `<div class="p-3 bg-slate-50 border border-slate-100 rounded-xl">
+                    <p class="text-[9px] font-black text-blue-600 uppercase">${t.exam}</p>
+                    <p class="text-xs font-bold text-slate-800">${t.title}</p>
+                </div>`;
             });
+        }
+
+        // 🏆 LOAD STUDENT RESULTS
+        async function loadStudentResults() {
+            const table = document.getElementById('results-table');
+            try {
+                const resSnap = await getDocs(query(collection(db, "results"), orderBy("timestamp", "desc")));
+                const userSnap = await getDocs(collection(db, "users"));
+                const testSnap = await getDocs(collection(db, "tests"));
+
+                const usersMap = {}; userSnap.forEach(d => usersMap[d.id] = d.data().name);
+                const testsMap = {}; testSnap.forEach(d => testsMap[d.id] = d.data().title);
+
+                table.innerHTML = "";
+                if(resSnap.empty) table.innerHTML = "<tr><td colspan='5' class='text-center py-10 text-slate-300'>No results found</td></tr>";
+
+                resSnap.forEach(doc => {
+                    const r = doc.data();
+                    const date = r.timestamp ? new Date(r.timestamp.seconds * 1000).toLocaleDateString() : 'New';
+                    table.innerHTML += `<tr class="border-b border-slate-50 hover:bg-slate-50/50">
+                        <td class="py-4 text-slate-700">${usersMap[r.userId] || 'User'}</td>
+                        <td class="py-4 text-slate-400 text-xs">${testsMap[r.testId] || 'Test'}</td>
+                        <td class="py-4 text-blue-700 font-black">${r.score}</td>
+                        <td class="py-4"><span class="bg-green-100 text-green-700 px-2 py-1 rounded text-[10px] font-bold">${r.accuracy}%</span></td>
+                        <td class="py-4 text-right text-[10px] text-slate-300">${date}</td>
+                    </tr>`;
+                });
+            } catch (e) { console.error(e); }
         }
     </script>
 </body>
