@@ -14,10 +14,13 @@
     <style>
         body { font-family: 'Poppins', sans-serif; background: #f8fafc; }
         .brand-font { font-family: 'Cinzel', serif; }
+        /* Glass Effect */
         .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px); }
+        /* शुरुआत में स्क्रीन छुपा कर रखें ताकि झटका न लगे */
+        body { opacity: 0; transition: opacity 0.5s ease-in; }
     </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-6 bg-slate-100">
+<body class="min-h-screen flex items-center justify-center p-6 bg-slate-100" onload="document.body.style.opacity='1'">
 
     <div id="login-container" style="display:none;" class="max-w-md w-full glass-card p-10 rounded-[3rem] shadow-2xl border border-white text-center relative overflow-hidden">
         
@@ -25,7 +28,6 @@
 
         <div class="flex justify-center mb-6">
             <div class="w-24 h-24 bg-blue-900 rounded-full flex items-center justify-center border-4 border-yellow-400 shadow-xl relative">
-                <div class="absolute w-full h-full rounded-full border border-white opacity-20 transform scale-90"></div>
                 <span class="text-white font-black text-4xl brand-font tracking-tighter">JE</span>
             </div>
         </div>
@@ -33,7 +35,7 @@
         <h1 class="text-3xl font-black text-slate-800 brand-font tracking-wide mb-10">JANZ EDUCATION</h1>
 
         <button onclick="loginWithGoogle()" class="w-full bg-white border-2 border-slate-100 text-slate-700 py-4 rounded-2xl font-bold flex items-center justify-center gap-3 hover:bg-slate-50 hover:border-blue-200 transition-all shadow-sm active:scale-95 group mb-6">
-            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="24" class="group-hover:rotate-12 transition-transform">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="24">
             <span class="text-sm">Sign in with Google</span>
         </button>
 
@@ -46,18 +48,10 @@
         <div class="space-y-4">
             <input type="email" id="email" placeholder="Email Address" class="w-full p-4 bg-slate-50 border-2 border-transparent rounded-2xl text-sm outline-none focus:border-blue-900 focus:bg-white transition-all">
             <input type="password" id="password" placeholder="Password" class="w-full p-4 bg-slate-50 border-2 border-transparent rounded-2xl text-sm outline-none focus:border-blue-900 focus:bg-white transition-all">
-            
             <button onclick="loginEmail()" class="w-full bg-blue-900 text-white py-4 rounded-2xl font-bold text-xs shadow-lg shadow-blue-200 hover:bg-black transition-all uppercase tracking-widest">Login Securely</button>
         </div>
 
         <p class="mt-8 text-[9px] text-slate-400">By continuing, you agree to Janz Education's <br> <b>Terms of Service</b></p>
-    </div>
-
-    <div id="loader" class="fixed inset-0 flex items-center justify-center bg-white z-50">
-        <div class="text-center">
-            <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-blue-900 mx-auto mb-4"></div>
-            <p class="text-xs font-bold text-blue-900 animate-pulse">Checking Login...</p>
-        </div>
     </div>
 
     <script type="module">
@@ -65,76 +59,64 @@
         import { GoogleAuthProvider, signInWithRedirect, getRedirectResult, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // PWA Service Worker
+        // सर्विस वर्कर (App Install Feature)
         if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 
-        // 🔥 FIX: Redirect Result Checker (जासूस)
-        // यह चेक करता है कि क्या यूजर अभी गूगल से लॉगिन करके लौटा है?
-        const checkRedirect = async () => {
-            try {
-                const result = await getRedirectResult(auth);
-                if (result && result.user) {
-                    console.log("Redirect Login Successful!");
-                    await saveUser(result.user);
-                    window.location.replace("dashboard.html");
-                }
-            } catch (error) {
-                console.error("Redirect Error:", error);
-                // अगर कोई एरर है तो लोडर हटाओ और लॉगिन पेज दिखाओ
-                document.getElementById('loader').style.display = 'none';
-                document.getElementById('login-container').style.display = 'block';
+        // 🔥 SUPER FAST LOGIC 🔥
+        
+        // 1. Google से लौटते ही पकड़ो (Redirect Catch)
+        getRedirectResult(auth).then(async (result) => {
+            if (result && result.user) {
+                // अगर गूगल से लॉगिन होकर आया है -> सीधा अंदर
+                await saveUser(result.user);
+                window.location.replace("dashboard.html");
             }
-        };
-        checkRedirect();
+        }).catch((error) => {
+            console.error(error);
+        });
 
-        // 🔄 NORMAL AUTH CHECK
+        // 2. क्या पहले से लॉगिन है? (Auto Login)
         onAuthStateChanged(auth, async (user) => {
             if (user) {
-                // अगर यूजर पहले से लॉगिन है
-                await saveUser(user);
+                // हाँ, पुराना बंदा है -> सीधा डैशबोर्ड भेजो
+                // (बिना लोडिंग दिखाए)
                 window.location.replace("dashboard.html");
             } else {
-                // अगर कोई यूजर नहीं है, तो लोडर हटाओ और पेज दिखाओ
-                // लेकिन थोड़ा रुककर ताकि Redirect Check पूरा हो सके
-                setTimeout(() => {
-                    if(document.getElementById('loader').style.display !== 'none') {
-                       document.getElementById('loader').style.display = 'none';
-                       document.getElementById('login-container').style.display = 'block';
-                    }
-                }, 2000);
+                // नहीं, नया बंदा है -> लॉगिन स्क्रीन दिखाओ
+                document.getElementById('login-container').style.display = 'block';
             }
         });
 
-        // Save User Helper Function
+        // यूजर सेव करने का छोटा फंक्शन
         async function saveUser(user) {
             const userRef = doc(db, "users", user.uid);
-            const snap = await getDoc(userRef);
-            if(!snap.exists()) {
-                await setDoc(userRef, {
-                    name: user.displayName, email: user.email,
-                    photo: user.photoURL, createdAt: serverTimestamp()
-                });
-            }
+            // हम चेक नहीं करेंगे, सीधा अपडेट कर देंगे (Faster)
+            // setDoc merge:true के साथ बहुत तेज होता है
+            await setDoc(userRef, {
+                name: user.displayName, 
+                email: user.email,
+                photo: user.photoURL,
+                lastLogin: serverTimestamp()
+            }, { merge: true });
         }
 
-        // 🚀 BUTTON ACTION
+        // 🚀 Google Button Action
         window.loginWithGoogle = () => {
             const provider = new GoogleAuthProvider();
-            // provider.setCustomParameters({ prompt: 'select_account' }); // Auto-login enabled
-            document.getElementById('login-container').style.display = 'none';
-            document.getElementById('loader').style.display = 'flex';
-            signInWithRedirect(auth, provider); 
+            // बटन दबाते ही लॉगिन स्क्रीन गायब कर दो ताकि लोडिंग न लगे
+            document.body.style.opacity = '0.5'; 
+            signInWithRedirect(auth, provider);
         };
 
-        // 📧 EMAIL LOGIN
+        // 📧 Email Login Action
         window.loginEmail = async () => {
             const email = document.getElementById('email').value;
             const pass = document.getElementById('password').value;
-            if(!email || !pass) return alert("Please fill all fields");
+            if(!email || !pass) return alert("Please fill details");
             try {
                 await signInWithEmailAndPassword(auth, email, pass);
                 window.location.replace("dashboard.html");
-            } catch (error) { alert("Error: " + error.message); }
+            } catch (error) { alert(error.message); }
         };
     </script>
 </body>
