@@ -9,45 +9,64 @@
     <script src='https://cdn.tailwindcss.com'></script>
 
     <style>
-        /* 🎨 DESIGN - Bilkul Wahi Structure Jo Apne Diya */
-        body { font-family: 'Poppins', 'Noto Sans Devanagari', sans-serif; background: #f0f4f8; margin: 0; padding: 0; display: flex; flex-direction: column; min-height: 100vh; }
+        /* 🎨 DESIGN - Premium Level */
+        body { font-family: 'Poppins', 'Noto Sans Devanagari', sans-serif; background: #f0f4f8; margin: 0; padding: 0; display: flex; flex-direction: column; min-height: 100vh; overflow-x: hidden; }
         .main-wrapper { flex: 1; }
 
+        /* 👇 हेडर और मेन्यू बटन 👇 */
         header { 
             background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%); 
-            color: #fff; padding: 15px 5%; text-align: center; 
+            color: #fff; padding: 12px 20px; 
             border-bottom: 4px solid #fbbf24; border-radius: 0 0 25px 25px; 
             box-shadow: 0 5px 20px rgba(0,0,0,0.2); 
-            position: relative;
+            display: flex; justify-content: space-between; align-items: center;
+            position: sticky; top: 0; z-index: 50;
         }
-        header h1 { font-size: 24px; font-weight: 800; color: #fbbf24; margin: 0; }
-        header p { font-size: 12px; opacity: 0.9; margin-top: 4px; color: #f8fafc; }
+        .menu-btn { background: none; border: none; color: white; font-size: 26px; cursor: pointer; padding: 0; }
+        .header-text { text-align: center; flex: 1; }
+        .header-text h1 { font-size: 18px; font-weight: 800; color: #fbbf24; margin: 0; letter-spacing: 1px; }
+        .header-text p { font-size: 10px; opacity: 0.9; margin-top: 2px; color: #f8fafc; }
+        .spacer { width: 26px; }
 
-        .main-container { max-width: 800px; margin: 30px auto; padding: 0 20px; }
+        /* 👇 साइडबार (Drawer) डिज़ाइन 👇 */
+        .sidebar-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 99; opacity: 0; visibility: hidden; transition: 0.3s ease; }
+        .sidebar-overlay.active { opacity: 1; visibility: visible; }
+        
+        .sidebar { position: fixed; top: 0; left: -280px; width: 260px; height: 100vh; background: #ffffff; z-index: 100; box-shadow: 5px 0 15px rgba(0,0,0,0.2); transition: 0.3s ease; display: flex; flex-direction: column; }
+        .sidebar.active { left: 0; }
+        
+        .sidebar-header { background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%); padding: 30px 20px; color: white; text-align: center; border-bottom: 4px solid #fbbf24; }
+        .sidebar-avatar { font-size: 40px; margin-bottom: 5px; background: rgba(255,255,255,0.2); width: 60px; height: 60px; border-radius: 50%; display: inline-flex; justify-content: center; align-items: center; border: 2px solid #fbbf24; }
+        
+        .sidebar-menu { list-style: none; padding: 10px 0; margin: 0; flex: 1; }
+        .sidebar-menu li { padding: 15px 25px; display: flex; align-items: center; gap: 15px; color: #334155; font-weight: 600; font-size: 14px; border-bottom: 1px solid #f1f5f9; cursor: pointer; transition: 0.2s; }
+        .sidebar-menu li:hover { background: #f8fafc; color: #2563eb; padding-left: 30px; }
+        
+        /* मोटिवेशनल बॉक्स */
+        .motivation-box { padding: 20px; background: #f8fafc; text-align: center; border-top: 1px solid #e2e8f0; }
+        .motivation-text { font-size: 11px; font-style: italic; color: #64748b; margin-bottom: 8px; line-height: 1.6; font-weight: 600; }
+        .motivation-author { font-size: 11px; font-weight: 800; color: #0f172a; letter-spacing: 0.5px; background: #fbbf24; padding: 3px 10px; border-radius: 12px; display: inline-block;}
+
+        .main-container { max-width: 800px; margin: 20px auto; padding: 0 20px; }
 
         .welcome-box { background: white; padding: 20px; border-radius: 15px; border-left: 5px solid #2563eb; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 25px; }
         
-        /* 📁 Folder Card Design */
-        .folder-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+        /* 📁 VIP Folder Card Design (Medium Size: 140px) */
+        .folder-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; }
         .folder-card { 
-            background: white; padding: 25px 15px; border-radius: 15px; border: 1px solid #e2e8f0; 
-            text-align: center; cursor: pointer; transition: 0.3s;
+            background: linear-gradient(145deg, #ffffff, #f8fafc); padding: 20px 10px; 
+            border-radius: 18px; border: 1px solid #e2e8f0; text-align: center; cursor: pointer; 
+            transition: all 0.3s ease; box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.03), -4px -4px 10px rgba(255, 255, 255, 0.8);
         }
-        .folder-card:hover { transform: translateY(-5px); border-color: #fbbf24; background: #fffbeb; }
-        .folder-icon { font-size: 40px; margin-bottom: 10px; display: block; }
+        .folder-card:hover { transform: translateY(-5px) scale(1.02); border-color: #fbbf24; background: linear-gradient(145deg, #fffbeb, #ffffff); box-shadow: 5px 10px 15px rgba(251, 191, 36, 0.15); }
+        .folder-icon { font-size: 35px; margin-bottom: 8px; display: block; filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.1)); }
 
-        /* 📝 Test Card Style (Same as your structure) */
-        .test-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px; }
-        .test-card { 
-            background: white; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0; 
-            transition: transform 0.2s; position: relative;
-        }
-        .test-card:hover { transform: translateY(-3px); border-color: #fbbf24; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        /* 📝 Test Card Style */
+        .test-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; }
+        .test-card { background: white; padding: 15px; border-radius: 15px; border: 1px solid #e2e8f0; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+        .test-card:hover { transform: translateY(-3px); border-color: #2563eb; box-shadow: 0 8px 15px rgba(37, 99, 235, 0.1); }
         
-        .logout-btn { background: #fee2e2; color: #991b1b; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; cursor: pointer; border: none; float: right; transition: 0.2s;}
-        .logout-btn:hover { background: #fecaca; }
-
-        #loading-screen { position: fixed; inset: 0; background: white; z-index: 100; display: flex; justify-content: center; align-items: center; }
+        #loading-screen { position: fixed; inset: 0; background: white; z-index: 1000; display: flex; justify-content: center; align-items: center; }
         
         footer { text-align: center; padding: 40px 20px; background: #fff; border-top: 2px solid #e2e8f0; margin-top: auto; }
         .about-box { background: #f8fafc; padding: 20px; border-radius: 15px; border: 1px dashed #cbd5e1; margin-bottom: 20px; }
@@ -59,30 +78,51 @@
         <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-900"></div>
     </div>
 
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-avatar">👨‍🎓</div>
+            <h3 id="sidebar-user-name" class="font-bold text-lg mt-2">Student</h3>
+            <p class="text-[10px] text-blue-200 uppercase tracking-widest mt-1">Janz Education</p>
+        </div>
+        <ul class="sidebar-menu">
+            <li onclick="window.location.href='dashboard.html'"><span class="text-xl">🏠</span> Home</li>
+            <li><span class="text-xl">👤</span> My Profile</li>
+            <li id="sidebar-logout-btn" style="color: #ef4444;"><span class="text-xl">🚪</span> Logout</li>
+        </ul>
+        <div class="motivation-box">
+            <p class="motivation-text">"कठोर परिश्रम का कोई विकल्प नहीं है, सफलता उन्हीं को मिलती है जो कभी हार नहीं मानते।"</p>
+            <p class="motivation-author">~ MD AYUB JANZ</p>
+        </div>
+    </div>
+
     <div class='main-wrapper'>
         <header>
-            <h1>JANZ EDUCATION</h1>
-            <p>सपनों की उड़ान, शिक्षा के साथ 🚀</p>
+            <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+            <div class="header-text">
+                <h1>JANZ EDUCATION</h1>
+                <p>सपनों की उड़ान, शिक्षा के साथ 🚀</p>
+            </div>
+            <div class="spacer"></div>
         </header>
 
         <div class='main-container'>
             
             <div class="welcome-box">
-                <button id="logout-btn" class="logout-btn">Logout</button>
                 <h2 class="text-xl font-bold text-gray-800">Hello, <span id="user-name">Student</span> 👋</h2>
-                <div class="flex items-center gap-2 mt-1">
-                    <button id="back-btn" class="hidden text-blue-600 font-bold text-xs bg-blue-50 px-2 py-1 rounded">⬅️ Back</button>
-                    <p class="text-sm text-gray-500" id="path-text">Test Series 2026</p>
+                <div class="flex items-center gap-2 mt-2">
+                    <button id="back-btn" class="hidden text-blue-600 font-bold text-xs bg-blue-50 px-3 py-1.5 rounded-lg shadow-sm hover:bg-blue-100 transition">⬅️ Back</button>
+                    <p class="text-sm text-gray-500 font-medium" id="path-text">Test Series 2026</p>
                 </div>
             </div>
 
-            <h3 class="font-bold text-gray-700 mb-4 border-l-4 border-yellow-400 pl-3" id="title-text">All Exams</h3>
+            <h3 class="font-bold text-gray-700 mb-4 border-l-4 border-yellow-400 pl-3 uppercase tracking-wide text-sm" id="title-text">All Exams</h3>
 
             <div id="content-area" class="folder-grid">
                 </div>
 
             <div id="no-data-msg" class="hidden text-center py-10 bg-white rounded-xl border border-dashed border-gray-300">
-                <p class="text-gray-400 text-sm">अभी यहाँ कुछ भी उपलब्ध नहीं है।</p>
+                <p class="text-gray-400 text-sm font-medium">अभी यहाँ कुछ भी उपलब्ध नहीं है।</p>
             </div>
 
         </div>
@@ -99,7 +139,8 @@
     <script type="module">
         import { auth, db } from "./config.js";
         import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        // OrderBy जोड़ा गया है ताकि टेस्ट क्रम से आएँ
+        import { collection, getDocs, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const loader = document.getElementById('loading-screen');
         const contentArea = document.getElementById('content-area');
@@ -112,19 +153,27 @@
         let userResults = new Set();
         const ADMIN_EMAIL = "mdayubjanz@gmail.com";
 
+        window.toggleSidebar = () => {
+            document.getElementById('sidebar').classList.toggle('active');
+            document.getElementById('sidebar-overlay').classList.toggle('active');
+        };
+
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 if(user.email === ADMIN_EMAIL) { window.location.href = "admin.html"; return; }
                 document.getElementById('user-name').innerText = user.displayName || "Student";
+                document.getElementById('sidebar-user-name').innerText = user.displayName || "Student";
                 
-                // 1. User ke results fetch karo (Attempt/Re-attempt ke liye)
                 const resSnap = await getDocs(query(collection(db, "results"), where("userId", "==", user.uid)));
                 resSnap.forEach(doc => userResults.add(doc.data().testId));
 
-                // 2. Sare tests load karo
-                const testSnap = await getDocs(collection(db, "tests"));
+                // डेटाबेस से टेस्ट क्रम (Order) में लाने का कोड
+                const testQuery = query(collection(db, "tests"), orderBy("timestamp", "asc"));
+                const testSnap = await getDocs(testQuery);
                 allTests = testSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 
+                // शुरुआती हिस्ट्री सेट करना
+                history.replaceState({level: 'exam'}, "", "");
                 renderUI();
                 loader.style.display = 'none';
             } else {
@@ -144,9 +193,10 @@
 
                 const exams = [...new Set(allTests.map(t => t.exam))];
                 if(exams.length === 0) document.getElementById('no-data-msg').classList.remove('hidden');
-                exams.forEach(ex => createFolder(ex, "📂", () => {
-                    viewState.level = 'subject'; viewState.exam = ex; renderUI();
-                    history.pushState({page: 'subject'}, "", "#folder");
+                exams.forEach(ex => createFolder(ex, "🎓", () => {
+                    viewState.level = 'subject'; viewState.exam = ex; 
+                    history.pushState({level: 'subject'}, "", "#subject"); // बैक बटन के लिए हिस्ट्री सेव
+                    renderUI();
                 }));
             } 
             else if (viewState.level === 'subject') {
@@ -157,8 +207,9 @@
 
                 const subjects = [...new Set(allTests.filter(t => t.exam === viewState.exam).map(t => t.subject))];
                 subjects.forEach(sub => createFolder(sub, "📘", () => {
-                    viewState.level = 'test'; viewState.subject = sub; renderUI();
-                    history.pushState({page: 'test'}, "", "#folder");
+                    viewState.level = 'test'; viewState.subject = sub; 
+                    history.pushState({level: 'test'}, "", "#test"); // बैक बटन के लिए हिस्ट्री सेव
+                    renderUI();
                 }));
             }
             else if (viewState.level === 'test') {
@@ -171,27 +222,27 @@
                 tests.forEach(test => {
                     const isDone = userResults.has(test.id);
                     const isNotice = test.questions.length === 0; 
-const card = `
-    <div class="test-card">
-        <div class="flex justify-between items-center mb-2">
-            <span class="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-0.5 rounded">
-                ${isNotice ? '📢 सूचना' : '📝 टेस्ट'}
-            </span>
-            <span class="text-[10px] text-gray-400">${isNotice ? '' : (test.duration || 0) + ' min'}</span>
-        </div>
-        <h4 class="font-bold text-base text-slate-800 leading-tight">${test.title}</h4>
-        
-        ${isNotice ? `
-            <p class="text-[12px] text-gray-600 mt-2 italic">प्रिय विद्यार्थियों, यहाँ जल्द ही कंटेंट अपलोड होगा।</p>
-        ` : `
-            <div class="text-[10px] text-gray-500 mt-2 mb-3">
-                📝 ${test.questions.length} Qs • 🎯 ${test.questions.length} Marks
-            </div>
-            <button onclick="startTest('${test.id}')" class="w-full ${isDone ? 'bg-gray-400' : 'bg-blue-700'} text-white py-2 rounded-lg font-bold">
-                ${isDone ? 'Re-attempt Test' : 'Attempt Now'}
-            </button>
-        `}
-    </div>`;
+                    const card = `
+                        <div class="test-card">
+                            <div class="flex justify-between items-center mb-3">
+                                <span class="bg-blue-100 text-blue-800 text-[10px] font-black tracking-wider px-3 py-1 rounded-full uppercase">
+                                    ${isNotice ? '📢 सूचना' : '📝 टेस्ट'}
+                                </span>
+                                <span class="text-[11px] font-bold text-gray-400 bg-gray-50 px-2 py-1 rounded-md">${isNotice ? '' : '⏳ ' + (test.duration || 0) + ' min'}</span>
+                            </div>
+                            <h4 class="font-bold text-base text-slate-800 leading-tight">${test.title}</h4>
+                            
+                            ${isNotice ? `
+                                <p class="text-[12px] text-gray-500 mt-3 italic bg-yellow-50 p-2 rounded-lg border border-yellow-100">प्रिय विद्यार्थियों, यहाँ जल्द ही कंटेंट अपलोड होगा।</p>
+                            ` : `
+                                <div class="text-[11px] font-semibold text-gray-500 mt-3 mb-4 bg-slate-50 p-2 rounded-lg flex justify-around">
+                                    <span>📝 ${test.questions.length} Qs</span> <span class="text-gray-300">|</span> <span>🎯 ${test.questions.length} Marks</span>
+                                </div>
+                                <button onclick="startTest('${test.id}')" class="w-full ${isDone ? 'bg-slate-200 text-slate-600 hover:bg-slate-300' : 'bg-blue-700 text-white shadow-md shadow-blue-200 hover:bg-blue-800 hover:shadow-lg hover:-translate-y-1'} transition-all duration-300 py-3 rounded-xl font-bold text-sm tracking-wide">
+                                    ${isDone ? '🔄 Re-attempt Test' : '▶ Attempt Now'}
+                                </button>
+                            `}
+                        </div>`;
                     contentArea.innerHTML += card;
                 });
             }
@@ -200,41 +251,36 @@ const card = `
         function createFolder(name, icon, clickFn) {
             const div = document.createElement('div');
             div.className = "folder-card";
-            div.innerHTML = `<span class="folder-icon">${icon}</span><span class="font-bold text-gray-700 text-sm">${name}</span>`;
+            div.innerHTML = `<span class="folder-icon">${icon}</span><span class="font-bold text-slate-700 text-sm block mt-2">${name}</span>`;
             div.onclick = clickFn;
             contentArea.appendChild(div);
         }
 
-        // ✅ बैक बटन और नेविगेशन का पक्का इलाज
-backBtn.onclick = () => {
-    if (viewState.level === 'test') { viewState.level = 'subject'; }
-    else if (viewState.level === 'subject') { viewState.level = 'exam'; }
-    renderUI();
-    // मोबाइल हिस्ट्री को भी एक कदम पीछे ले जाएं
-    if (window.location.hash === "#folder") {
-        history.back();
-    }
-};
+        // स्क्रीन वाला 'Back' बटन
+        backBtn.onclick = () => {
+            history.back(); // यह नीचे वाले onpopstate को ट्रिगर करेगा
+        };
 
-// मोबाइल के असली बैक बटन को कंट्रोल करने के लिए
-window.onpopstate = function(event) {
-    if (viewState.level !== 'exam') {
-        backBtn.click(); // यह अपने आप पिछले फोल्डर पर ले जाएगा
-    }
-};
-
-// ✅ ऑटो-लॉगिन फिक्स (इसे स्क्रिप्ट की शुरुआत में, लाइन 136 के पास डालें)
-onAuthStateChanged(auth, (user) => {
-    if (!user) {
-        window.location.href = "index.html";
-    }
-});
+        // 👇 फोन का असली (Hardware) 'Back' बटन कंट्रोल करने का कोड 👇
+        window.onpopstate = function(event) {
+            if (viewState.level === 'test') { 
+                viewState.level = 'subject'; 
+                renderUI(); 
+            }
+            else if (viewState.level === 'subject') { 
+                viewState.level = 'exam'; 
+                renderUI(); 
+            }
+            else {
+                // अगर exam लेवल पर हैं, तो कुछ न करें, ऐप बैक हो जाएगा
+            }
+        };
 
         window.startTest = (id) => {
             window.location.href = `test-player.html?id=${id}`;
         };
 
-        document.getElementById('logout-btn').onclick = () => signOut(auth);
+        document.getElementById('sidebar-logout-btn').onclick = () => signOut(auth);
     </script>
 </body>
 </html>
