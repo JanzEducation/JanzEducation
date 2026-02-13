@@ -1,50 +1,128 @@
-<script type="module">
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exam Player | Janz Education</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Poppins', sans-serif; background: #f8fafc; }
+        .analysis-card { display: none; }
+        .analysis-card.active { display: block; }
+    </style>
+</head>
+<body>
+    <div id="test-header" class="hidden sticky top-0 bg-white shadow-sm p-3 z-50 border-b border-slate-200">
+        <div class="max-w-4xl mx-auto flex justify-between items-center">
+            <h2 id="test-title-display" class="font-bold text-slate-800 text-[11px] uppercase truncate w-1/2">Loading...</h2>
+            <div class="flex items-center gap-2">
+                <div id="timer" class="bg-red-500 text-white px-3 py-1 rounded-full font-black text-[11px]">00:00</div>
+                <button onclick="finishTest()" class="bg-blue-900 text-white px-3 py-1 rounded-lg text-[10px] font-bold">SUBMIT</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="test-screen" class="hidden p-4 max-w-4xl mx-auto mt-2">
+        <div class="bg-white p-5 rounded-3xl shadow-lg border border-slate-100">
+            <span id="q-count" class="text-[9px] font-black text-blue-600 bg-blue-50 px-3 py-1 rounded-full uppercase tracking-tighter">Q1</span>
+            <h3 id="q-text" class="mt-4 mb-6 text-sm font-bold text-slate-800 leading-relaxed">Loading Question...</h3>
+            <div id="options-container" class="space-y-2.5"></div>
+            <div class="flex justify-between mt-8 gap-3">
+                <button id="prev-btn" onclick="prevQ()" class="flex-1 bg-slate-100 py-3 rounded-xl font-bold text-slate-500 hidden text-xs">PREVIOUS</button>
+                <button id="next-btn" onclick="nextQ()" class="flex-1 bg-blue-900 text-white py-3 rounded-xl font-bold text-xs">NEXT QUESTION</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="result-screen" class="hidden p-3 max-w-4xl mx-auto">
+        <div class="bg-blue-900 text-white p-5 rounded-[2rem] text-center shadow-xl mb-6 border-b-4 border-yellow-400">
+            <h1 class="text-xl font-black mb-1">TEST RESULT</h1>
+            <div class="flex justify-around gap-3 mt-4">
+                <div class="bg-white/10 p-3 rounded-2xl flex-1 border border-white/5">
+                    <p class="text-[9px] opacity-60 uppercase mb-1">Score</p>
+                    <h2 id="res-score" class="text-2xl font-black text-yellow-400">0/0</h2>
+                </div>
+                <div class="bg-white/10 p-3 rounded-2xl flex-1 border border-white/5">
+                    <p class="text-[9px] opacity-60 uppercase mb-1">Accuracy</p>
+                    <h2 id="res-acc" class="text-2xl font-black text-green-400">0%</h2>
+                </div>
+            </div>
+            <div id="history-box" class="mt-4 text-left bg-black/20 p-3 rounded-xl hidden text-[10px]">
+                <p class="font-bold text-yellow-400 mb-1 tracking-widest uppercase">History</p>
+                <div id="history-list" class="space-y-1"></div>
+            </div>
+            <button onclick="goToHome()" class="mt-4 bg-white text-blue-900 px-6 py-2 rounded-lg font-black text-[10px] uppercase shadow-md">Back to Home</button>
+        </div>
+
+        <div class="flex justify-between items-center mb-3 px-2">
+            <h3 class="font-black text-slate-800 uppercase text-xs">Analysis</h3>
+            <span id="analysis-counter" class="bg-blue-600 text-white px-3 py-0.5 rounded-full text-[10px]">1/10</span>
+        </div>
+        <div id="analysis-list"></div>
+        <div class="flex justify-between mt-5 gap-3 pb-10 px-2">
+            <button id="prev-anal" onclick="moveAnalysis(-1)" class="flex-1 bg-white border border-slate-200 py-3 rounded-xl font-bold text-xs text-slate-600 shadow-sm">PREV</button>
+            <button id="next-anal" onclick="moveAnalysis(1)" class="flex-1 bg-slate-800 text-white py-3 rounded-xl font-bold text-xs shadow-lg">NEXT</button>
+        </div>
+    </div>
+
+    <script type="module">
         import { auth, db } from "./config.js";
+        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { collection, addDoc, doc, getDoc, getDocs, query, where, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         let testId = new URLSearchParams(window.location.search).get('id');
-        // 🔥 नया: चेक कर रहे हैं कि छात्र 'History' बटन दबाकर आया है या 'Attempt' दबाकर
+        // 🔥 चेक कर रहे हैं कि छात्र 'History' बटन दबाकर आया है या 'Attempt'
         let isHistoryView = new URLSearchParams(window.location.search).get('view') === 'history';
         
         let testData, currentQ = 0, currentAnal = 0, answers = {}, timeLeft, timerInterval, isSubmitting = false;
 
-        window.onload = async () => {
-            const snap = await getDoc(doc(db, "tests", testId));
-            if(!snap.exists()) return alert("Test not found!");
-            testData = snap.data();
-            timeLeft = testData.questions.length * 60;
-            document.getElementById('test-title-display').innerText = testData.title;
-            
-            // बैक बटन लॉक
-            history.pushState(null, null, location.href);
-            window.onpopstate = () => {
-                // अगर हिस्ट्री देख रहा है तो कोई चेतावनी मत दो
-                if(!isSubmitting && !isHistoryView && confirm("सावधान! पहले सबमिट करें!")) window.location.href='dashboard.html';
-                else history.pushState(null, null, location.href);
-            };
+        // 🔥 मेन फिक्स: Firebase Auth चेक करेगा तभी डेटा निकालेगा, जिससे क्रैश नहीं होगा
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                const snap = await getDoc(doc(db, "tests", testId));
+                if(!snap.exists()) return alert("Test not found!");
+                testData = snap.data();
+                timeLeft = testData.questions.length * 60;
+                document.getElementById('test-title-display').innerText = testData.title;
 
-            // 🔥 असली लॉजिक: अगर हिस्ट्री देखनी है, तो टेस्ट शुरू मत करो!
-            if (isHistoryView) {
-                document.getElementById('test-header').classList.add('hidden');
-                document.getElementById('test-screen').classList.add('hidden');
-                
-                // Firebase से पुराने रिजल्ट्स लाओ
-                const hSnap = await getDocs(query(collection(db, "results"), where("testId", "==", testId), where("userId", "==", auth.currentUser.uid), orderBy("timestamp", "desc")));
-                
-                if(!hSnap.empty) {
-                    let latestResult = hSnap.docs[0].data(); // सबसे ताज़ा रिजल्ट
-                    answers = latestResult.answers || {}; // 🔥 पुरानी चुनी हुई answers लोड करो
-                    renderAnalysis(latestResult.score, latestResult.accuracy);
-                    loadHistory(); 
+                // बैक बटन लॉक
+                history.pushState(null, null, location.href);
+                window.onpopstate = () => {
+                    // अगर हिस्ट्री देख रहा है तो कोई चेतावनी मत दो
+                    if(!isSubmitting && !isHistoryView) {
+                        if(confirm("सावधान! पहले सबमिट करें!")) window.location.href='dashboard.html';
+                        else history.pushState(null, null, location.href);
+                    } else {
+                        window.location.href='dashboard.html';
+                    }
+                };
+
+                // 🔥 अगर हिस्ट्री देखनी है, तो टेस्ट शुरू मत करो! सीधा रिज़ल्ट दिखाओ
+                if (isHistoryView) {
+                    document.getElementById('test-header').classList.add('hidden');
+                    document.getElementById('test-screen').classList.add('hidden');
+                    
+                    // Firebase से पुराने रिजल्ट्स लाओ
+                    const hSnap = await getDocs(query(collection(db, "results"), where("testId", "==", testId), where("userId", "==", user.uid), orderBy("timestamp", "desc")));
+                    
+                    if(!hSnap.empty) {
+                        let latestResult = hSnap.docs[0].data(); // सबसे ताज़ा रिजल्ट
+                        answers = latestResult.answers || {}; // 🔥 पुरानी चुनी हुई answers लोड करो
+                        renderAnalysis(latestResult.score, latestResult.accuracy);
+                        loadHistory(); 
+                    } else {
+                        alert("कोई पुरानी हिस्ट्री नहीं मिली!");
+                        window.location.href = 'dashboard.html';
+                    }
                 } else {
-                    alert("कोई पुरानी हिस्ट्री नहीं मिली!");
-                    window.location.href = 'dashboard.html';
+                    // अगर 'Attempt Now' या 'Re-attempt' से आया है, तो टेस्ट शुरू करो
+                    startTest();
                 }
             } else {
-                // अगर 'Attempt Now' से आया है, तो टेस्ट शुरू करो
-                startTest();
+                window.location.href = "index.html";
             }
-        };
+        });
 
         function startTest() {
             document.getElementById('test-header').classList.remove('hidden');
@@ -88,10 +166,11 @@
             testData.questions.forEach((q, i) => { if(answers[i] === q.answer) score++; });
             let acc = Math.round((score / testData.questions.length) * 100);
             
+            // तुरंत एनालिसिस दिखाओ
             renderAnalysis(score, acc);
             
             try {
-                // 🔥 सबसे बड़ा बदलाव: अब answers भी Firebase में सेव होंगे!
+                // 🔥 सबसे बड़ा बदलाव: अब छात्र की चुनी हुई 'answers' भी Firebase में सेव होगी!
                 await addDoc(collection(db, "results"), { 
                     testId, 
                     userId: auth.currentUser.uid, 
@@ -110,7 +189,7 @@
                 const hList = document.getElementById('history-list'); hList.innerHTML = "";
                 hSnap.forEach(doc => {
                     const d = doc.data(); const date = d.timestamp ? d.timestamp.toDate().toLocaleDateString('hi-IN') : 'अभी';
-                    hList.innerHTML += `<div class="flex justify-between py-1 border-b border-white/5"><span>📅 ${date}</span> <span>Score: ${d.score}/${testData.questions.length}</span></div>`;
+                    hList.innerHTML += `<div class="flex justify-between py-1 border-b border-white/5 text-[10px]"><span>📅 ${date}</span> <span>Score: ${d.score}/${testData.questions.length}</span></div>`;
                 });
                 document.getElementById('history-box').classList.remove('hidden');
             }
@@ -155,4 +234,6 @@
         }
 
         window.goToHome = () => { window.onbeforeunload = null; window.location.href = 'dashboard.html'; };
-</script>
+    </script>
+</body>
+</html>
