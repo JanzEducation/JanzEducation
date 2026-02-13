@@ -13,6 +13,13 @@
     </style>
 </head>
 <body>
+    <div id="loading-spinner" class="fixed inset-0 bg-slate-50 flex items-center justify-center z-[100]">
+        <div class="text-center">
+            <div class="animate-spin rounded-full h-10 w-10 border-b-4 border-blue-900 mx-auto mb-3"></div>
+            <p class="font-bold text-slate-600 text-xs tracking-widest uppercase">Loading...</p>
+        </div>
+    </div>
+
     <div id="test-header" class="hidden sticky top-0 bg-white shadow-sm p-3 z-50 border-b border-slate-200">
         <div class="max-w-4xl mx-auto flex justify-between items-center">
             <h2 id="test-title-display" class="font-bold text-slate-800 text-[11px] uppercase truncate w-1/2">Loading...</h2>
@@ -69,55 +76,63 @@
     <script type="module">
         import { auth, db } from "./config.js";
         import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { collection, addDoc, doc, getDoc, getDocs, query, where, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { collection, addDoc, doc, getDoc, getDocs, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         let testId = new URLSearchParams(window.location.search).get('id');
-        // 🔥 चेक कर रहे हैं कि छात्र 'History' बटन दबाकर आया है या 'Attempt'
         let isHistoryView = new URLSearchParams(window.location.search).get('view') === 'history';
         
         let testData, currentQ = 0, currentAnal = 0, answers = {}, timeLeft, timerInterval, isSubmitting = false;
 
-        // 🔥 मेन फिक्स: Firebase Auth चेक करेगा तभी डेटा निकालेगा, जिससे क्रैश नहीं होगा
         onAuthStateChanged(auth, async (user) => {
             if (user) {
-                const snap = await getDoc(doc(db, "tests", testId));
-                if(!snap.exists()) return alert("Test not found!");
-                testData = snap.data();
-                timeLeft = testData.questions.length * 60;
-                document.getElementById('test-title-display').innerText = testData.title;
-
-                // बैक बटन लॉक
-                history.pushState(null, null, location.href);
-                window.onpopstate = () => {
-                    // अगर हिस्ट्री देख रहा है तो कोई चेतावनी मत दो
-                    if(!isSubmitting && !isHistoryView) {
-                        if(confirm("सावधान! पहले सबमिट करें!")) window.location.href='dashboard.html';
-                        else history.pushState(null, null, location.href);
-                    } else {
-                        window.location.href='dashboard.html';
+                try {
+                    const snap = await getDoc(doc(db, "tests", testId));
+                    if(!snap.exists()) {
+                        alert("टेस्ट नहीं मिला!");
+                        return window.location.href = 'dashboard.html';
                     }
-                };
+                    testData = snap.data();
+                    timeLeft = testData.questions.length * 60;
+                    document.getElementById('test-title-display').innerText = testData.title;
 
-                // 🔥 अगर हिस्ट्री देखनी है, तो टेस्ट शुरू मत करो! सीधा रिज़ल्ट दिखाओ
-                if (isHistoryView) {
-                    document.getElementById('test-header').classList.add('hidden');
-                    document.getElementById('test-screen').classList.add('hidden');
-                    
-                    // Firebase से पुराने रिजल्ट्स लाओ
-                    const hSnap = await getDocs(query(collection(db, "results"), where("testId", "==", testId), where("userId", "==", user.uid), orderBy("timestamp", "desc")));
-                    
-                    if(!hSnap.empty) {
-                        let latestResult = hSnap.docs[0].data(); // सबसे ताज़ा रिजल्ट
-                        answers = latestResult.answers || {}; // 🔥 पुरानी चुनी हुई answers लोड करो
-                        renderAnalysis(latestResult.score, latestResult.accuracy);
-                        loadHistory(); 
+                    history.pushState(null, null, location.href);
+                    window.onpopstate = () => {
+                        if(!isSubmitting && !isHistoryView) {
+                            if(confirm("सावधान! पहले सबमिट करें!")) window.location.href='dashboard.html';
+                            else history.pushState(null, null, location.href);
+                        } else {
+                            window.location.href='dashboard.html';
+                        }
+                    };
+
+                    if (isHistoryView) {
+                        const hSnap = await getDocs(query(collection(db, "results"), where("testId", "==", testId), where("userId", "==", user.uid)));
+                        
+                        if(!hSnap.empty) {
+                            let allAttempts = [];
+                            hSnap.forEach(doc => allAttempts.push(doc.data()));
+                            
+                            allAttempts.sort((a, b) => {
+                                let timeA = (a.timestamp && a.timestamp.seconds) ? a.timestamp.seconds : 0;
+                                let timeB = (b.timestamp && b.timestamp.seconds) ? b.timestamp.seconds : 0;
+                                return timeB - timeA;
+                            });
+
+                            let latestResult = allAttempts[0]; 
+                            answers = latestResult.answers || {}; 
+                            
+                            renderAnalysis(latestResult.score, latestResult.accuracy);
+                            loadHistoryList(user.uid); 
+                        } else {
+                            alert("कोई पुरानी हिस्ट्री नहीं मिली!");
+                            window.location.href = 'dashboard.html';
+                        }
                     } else {
-                        alert("कोई पुरानी हिस्ट्री नहीं मिली!");
-                        window.location.href = 'dashboard.html';
+                        startTest();
                     }
-                } else {
-                    // अगर 'Attempt Now' या 'Re-attempt' से आया है, तो टेस्ट शुरू करो
-                    startTest();
+                } catch (error) {
+                    alert("डेटा लोड होने में दिक्कत: " + error.message);
+                    window.location.href = 'dashboard.html';
                 }
             } else {
                 window.location.href = "index.html";
@@ -125,6 +140,7 @@
         });
 
         function startTest() {
+            document.getElementById('loading-spinner').style.display = 'none';
             document.getElementById('test-header').classList.remove('hidden');
             document.getElementById('test-screen').classList.remove('hidden');
             showQuestion();
@@ -166,36 +182,41 @@
             testData.questions.forEach((q, i) => { if(answers[i] === q.answer) score++; });
             let acc = Math.round((score / testData.questions.length) * 100);
             
-            // तुरंत एनालिसिस दिखाओ
             renderAnalysis(score, acc);
             
             try {
-                // 🔥 सबसे बड़ा बदलाव: अब छात्र की चुनी हुई 'answers' भी Firebase में सेव होगी!
                 await addDoc(collection(db, "results"), { 
-                    testId, 
-                    userId: auth.currentUser.uid, 
-                    score, 
-                    accuracy: acc, 
-                    answers: answers, // छात्र ने क्या चुना था, यह भी सेव कर रहे हैं
-                    timestamp: serverTimestamp() 
+                    testId, userId: auth.currentUser.uid, score, accuracy: acc, answers: answers, timestamp: serverTimestamp() 
                 });
-                loadHistory();
-            } catch (e) { console.error("Error saving result:", e); }
+                loadHistoryList(auth.currentUser.uid);
+            } catch (e) { console.error("Error saving:", e); }
         };
 
-        async function loadHistory() {
-            const hSnap = await getDocs(query(collection(db, "results"), where("testId", "==", testId), where("userId", "==", auth.currentUser.uid), orderBy("timestamp", "desc")));
-            if(!hSnap.empty) {
-                const hList = document.getElementById('history-list'); hList.innerHTML = "";
-                hSnap.forEach(doc => {
-                    const d = doc.data(); const date = d.timestamp ? d.timestamp.toDate().toLocaleDateString('hi-IN') : 'अभी';
-                    hList.innerHTML += `<div class="flex justify-between py-1 border-b border-white/5 text-[10px]"><span>📅 ${date}</span> <span>Score: ${d.score}/${testData.questions.length}</span></div>`;
-                });
-                document.getElementById('history-box').classList.remove('hidden');
-            }
+        async function loadHistoryList(uid) {
+            try {
+                const hSnap = await getDocs(query(collection(db, "results"), where("testId", "==", testId), where("userId", "==", uid)));
+                if(!hSnap.empty) {
+                    let allAttempts = [];
+                    hSnap.forEach(doc => allAttempts.push(doc.data()));
+                    allAttempts.sort((a, b) => {
+                        let timeA = (a.timestamp && a.timestamp.seconds) ? a.timestamp.seconds : 0;
+                        let timeB = (b.timestamp && b.timestamp.seconds) ? b.timestamp.seconds : 0;
+                        return timeB - timeA;
+                    });
+
+                    const hList = document.getElementById('history-list'); 
+                    hList.innerHTML = "";
+                    allAttempts.forEach(d => {
+                        const date = d.timestamp ? new Date(d.timestamp.seconds * 1000).toLocaleDateString('hi-IN') : 'अभी';
+                        hList.innerHTML += `<div class="flex justify-between py-1 border-b border-white/5 text-[10px]"><span>Date: ${date}</span> <span>Score: ${d.score}/${testData.questions.length}</span></div>`;
+                    });
+                    document.getElementById('history-box').classList.remove('hidden');
+                }
+            } catch(e) { console.error(e); }
         }
 
         function renderAnalysis(score, acc) {
+            document.getElementById('loading-spinner').style.display = 'none';
             document.getElementById('test-header').classList.add('hidden');
             document.getElementById('test-screen').classList.add('hidden');
             document.getElementById('res-score').innerText = `${score}/${testData.questions.length}`;
