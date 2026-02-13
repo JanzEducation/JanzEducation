@@ -12,7 +12,6 @@
         body { font-family: 'Poppins', 'Noto Sans Devanagari', sans-serif; background: #f0f4f8; margin: 0; padding: 0; display: flex; flex-direction: column; min-height: 100vh; overflow-x: hidden; }
         .main-wrapper { flex: 1; }
 
-        /* 👇 फिक्स नेविगेशन बार 👇 */
         header { 
             background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%); 
             color: #fff; padding: 12px 20px; 
@@ -27,7 +26,6 @@
         .header-text p { font-size: 10px; opacity: 0.9; margin-top: 2px; color: #f8fafc; }
         .spacer { width: 26px; }
 
-        /* 👇 साइडबार डिज़ाइन 👇 */
         .sidebar-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 99; opacity: 0; visibility: hidden; transition: 0.3s ease; }
         .sidebar-overlay.active { opacity: 1; visibility: visible; }
         
@@ -41,23 +39,22 @@
         .sidebar-menu li { padding: 15px 25px; display: flex; align-items: center; gap: 15px; color: #334155; font-weight: 600; font-size: 14px; border-bottom: 1px solid #f1f5f9; cursor: pointer; transition: 0.2s; }
         .sidebar-menu li:hover { background: #f8fafc; color: #2563eb; padding-left: 30px; }
         
-        .motivation-box { padding: 20px; background: #f8fafc; text-align: center; border-top: 1px solid #e2e8f0; }
-        .motivation-text { font-size: 11px; font-style: italic; color: #64748b; margin-bottom: 8px; line-height: 1.6; font-weight: 600; }
-        .motivation-author { font-size: 11px; font-weight: 800; color: #0f172a; letter-spacing: 0.5px; background: #fbbf24; padding: 3px 10px; border-radius: 12px; display: inline-block;}
+        .motivation-box { padding: 15px; background: #f8fafc; text-align: center; border-top: 1px solid #e2e8f0; }
+        .motivation-text { font-size: 10px; font-style: italic; color: #64748b; margin-bottom: 5px; line-height: 1.4; font-weight: 600; }
+        .motivation-author { font-size: 10px; font-weight: 800; color: #0f172a; letter-spacing: 0.5px; background: #fbbf24; padding: 2px 8px; border-radius: 10px; display: inline-block;}
 
         .main-container { max-width: 800px; margin: 20px auto; padding: 0 20px; }
 
-        .welcome-box { background: white; padding: 20px; border-radius: 15px; border-left: 5px solid #2563eb; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 25px; }
+        .navigation-path-box { background: white; padding: 15px; border-radius: 15px; border-left: 5px solid #2563eb; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 25px; }
         
-        /* 📁 मीडियम फोल्डर डिज़ाइन (140px) 👇 */
         .folder-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; }
         .folder-card { 
             background: linear-gradient(145deg, #ffffff, #f8fafc); padding: 20px 10px; 
             border-radius: 18px; border: 1px solid #e2e8f0; text-align: center; cursor: pointer; 
             transition: all 0.3s ease; box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.03), -4px -4px 10px rgba(255, 255, 255, 0.8);
         }
-        .folder-card:hover { transform: translateY(-5px); border-color: #fbbf24; box-shadow: 5px 10px 15px rgba(251, 191, 36, 0.15); }
-        .folder-icon { font-size: 35px; margin-bottom: 8px; display: block; }
+        .folder-card:hover { transform: translateY(-5px) scale(1.02); border-color: #fbbf24; box-shadow: 5px 10px 15px rgba(251, 191, 36, 0.15); }
+        .folder-icon { font-size: 35px; margin-bottom: 8px; display: block; filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.1)); }
 
         .test-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; }
         .test-card { background: white; padding: 15px; border-radius: 15px; border: 1px solid #e2e8f0; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
@@ -66,6 +63,7 @@
         #loading-screen { position: fixed; inset: 0; background: white; z-index: 1000; display: flex; justify-content: center; align-items: center; }
         
         footer { text-align: center; padding: 40px 20px; background: #fff; border-top: 2px solid #e2e8f0; margin-top: auto; }
+        .about-box { background: #f8fafc; padding: 20px; border-radius: 15px; border: 1px dashed #cbd5e1; margin-bottom: 20px; }
     </style>
 </head>
 <body>
@@ -78,7 +76,7 @@
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <div class="sidebar-avatar">👨‍🎓</div>
-            <h3 id="sidebar-user-name" class="font-bold text-lg mt-2">Student</h3>
+            <h3 class="font-bold text-lg mt-2">Hello, <span id="sidebar-user-name">Student</span> 👋</h3>
             <p class="text-[10px] text-blue-200 uppercase tracking-widest mt-1">Janz Education</p>
         </div>
         <ul class="sidebar-menu">
@@ -103,9 +101,8 @@
         </header>
 
         <div class='main-container'>
-            <div class="welcome-box">
-                <h2 class="text-xl font-bold text-gray-800">Hello, <span id="user-name">Student</span> 👋</h2>
-                <div class="flex items-center gap-2 mt-2">
+            <div class="navigation-path-box">
+                <div class="flex items-center gap-2">
                     <button id="back-btn" class="hidden text-blue-600 font-bold text-xs bg-blue-50 px-3 py-1.5 rounded-lg shadow-sm hover:bg-blue-100 transition">⬅️ Back</button>
                     <p class="text-sm text-gray-500 font-medium" id="path-text">Test Series 2026</p>
                 </div>
@@ -120,6 +117,10 @@
     </div>
 
     <footer>
+        <div class='about-box' style='max-width:560px; margin:0 auto;'>
+            <h4 style='color:#0f172a; font-weight:bold; margin-bottom:10px;'>ABOUT US</h4>
+            <p style='font-size:13px; color:#475569; line-height:1.6;'>यह प्लेटफार्म <b>Janz Group</b> द्वारा विद्यार्थियों को ऑनलाइन प्रैक्टिस की सुविधा प्रदान करने के लिए समर्पित है।</p>
+        </div>
         <p style='font-size: 12px; color: #64748b;'>©2026 Janz Education संचालित By Janz Group</p>
     </footer>
 
@@ -137,6 +138,7 @@
         let allTests = [];
         let viewState = { level: 'exam', exam: '', subject: '' };
         let userResults = new Set();
+        const ADMIN_EMAIL = "mdayubjanz@gmail.com";
 
         window.toggleSidebar = () => {
             document.getElementById('sidebar').classList.toggle('active');
@@ -145,7 +147,8 @@
 
         onAuthStateChanged(auth, async (user) => {
             if (user) {
-                document.getElementById('user-name').innerText = user.displayName || "Student";
+                if(user.email === ADMIN_EMAIL) { window.location.href = "admin.html"; return; }
+                
                 document.getElementById('sidebar-user-name').innerText = user.displayName || "Student";
                 
                 const resSnap = await getDocs(query(collection(db, "results"), where("userId", "==", user.uid)));
@@ -154,7 +157,6 @@
                 const testSnap = await getDocs(collection(db, "tests"));
                 allTests = testSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 
-                // 👇 क्रम से लगाने के लिए Sorting 👇
                 allTests.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
 
                 history.replaceState({level: 'exam'}, "", "");
