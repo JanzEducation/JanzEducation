@@ -146,6 +146,7 @@
                 if(exams.length === 0) document.getElementById('no-data-msg').classList.remove('hidden');
                 exams.forEach(ex => createFolder(ex, "📂", () => {
                     viewState.level = 'subject'; viewState.exam = ex; renderUI();
+                    history.pushState({page: 'subject'}, "", "#folder");
                 }));
             } 
             else if (viewState.level === 'subject') {
@@ -157,6 +158,7 @@
                 const subjects = [...new Set(allTests.filter(t => t.exam === viewState.exam).map(t => t.subject))];
                 subjects.forEach(sub => createFolder(sub, "📘", () => {
                     viewState.level = 'test'; viewState.subject = sub; renderUI();
+                    history.pushState({page: 'test'}, "", "#folder");
                 }));
             }
             else if (viewState.level === 'test') {
@@ -168,20 +170,28 @@
                 const tests = allTests.filter(t => t.exam === viewState.exam && t.subject === viewState.subject);
                 tests.forEach(test => {
                     const isDone = userResults.has(test.id);
-                    const card = `
-                        <div class="test-card">
-                            <div class="flex justify-between items-center mb-2">
-                                <span class="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-0.5 rounded uppercase">${test.chapter || 'Chapter'}</span>
-                                <span class="text-[10px] text-gray-400">⏱️ ${test.duration}m</span>
-                            </div>
-                            <h4 class="font-bold text-base text-slate-800 leading-tight">${test.title}</h4>
-                            <div class="text-[10px] text-gray-500 mt-2 mb-3">
-                                📝 ${test.questions.length} Qs • 🎯 ${test.duration} Marks
-                            </div>
-                            <button onclick="startTest('${test.id}')" class="w-full ${isDone ? 'bg-green-600' : 'bg-blue-900'} text-white py-2 rounded-lg font-bold text-xs hover:bg-yellow-500 hover:text-black transition">
-                                ${isDone ? 'Re-attempt Test' : 'Attempt Now'}
-                            </button>
-                        </div>`;
+                    const isNotice = test.questions.length === 0; 
+const card = `
+    <div class="test-card">
+        <div class="flex justify-between items-center mb-2">
+            <span class="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-0.5 rounded">
+                ${isNotice ? '📢 सूचना' : '📝 टेस्ट'}
+            </span>
+            <span class="text-[10px] text-gray-400">${isNotice ? '' : (test.duration || 0) + ' min'}</span>
+        </div>
+        <h4 class="font-bold text-base text-slate-800 leading-tight">${test.title}</h4>
+        
+        ${isNotice ? `
+            <p class="text-[12px] text-gray-600 mt-2 italic">प्रिय विद्यार्थियों, यहाँ जल्द ही कंटेंट अपलोड होगा।</p>
+        ` : `
+            <div class="text-[10px] text-gray-500 mt-2 mb-3">
+                📝 ${test.questions.length} Qs • 🎯 ${test.questions.length} Marks
+            </div>
+            <button onclick="startTest('${test.id}')" class="w-full ${isDone ? 'bg-gray-400' : 'bg-blue-700'} text-white py-2 rounded-lg font-bold">
+                ${isDone ? 'Re-attempt Test' : 'Attempt Now'}
+            </button>
+        `}
+    </div>`;
                     contentArea.innerHTML += card;
                 });
             }
@@ -195,11 +205,30 @@
             contentArea.appendChild(div);
         }
 
-        backBtn.onclick = () => {
-            if (viewState.level === 'test') viewState.level = 'subject';
-            else if (viewState.level === 'subject') viewState.level = 'exam';
-            renderUI();
-        };
+        // ✅ बैक बटन और नेविगेशन का पक्का इलाज
+backBtn.onclick = () => {
+    if (viewState.level === 'test') { viewState.level = 'subject'; }
+    else if (viewState.level === 'subject') { viewState.level = 'exam'; }
+    renderUI();
+    // मोबाइल हिस्ट्री को भी एक कदम पीछे ले जाएं
+    if (window.location.hash === "#folder") {
+        history.back();
+    }
+};
+
+// मोबाइल के असली बैक बटन को कंट्रोल करने के लिए
+window.onpopstate = function(event) {
+    if (viewState.level !== 'exam') {
+        backBtn.click(); // यह अपने आप पिछले फोल्डर पर ले जाएगा
+    }
+};
+
+// ✅ ऑटो-लॉगिन फिक्स (इसे स्क्रिप्ट की शुरुआत में, लाइन 136 के पास डालें)
+onAuthStateChanged(auth, (user) => {
+    if (!user) {
+        window.location.href = "index.html";
+    }
+});
 
         window.startTest = (id) => {
             window.location.href = `test-player.html?id=${id}`;
