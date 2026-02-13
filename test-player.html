@@ -13,16 +13,18 @@
         #options-container p { font-size: 14px !important; line-height: 1.3; }
         .analysis-card { display: none; }
         .analysis-card.active { display: block; }
+        /* Scrollbar hide for history */
+        #history-list::-webkit-scrollbar { display: none; }
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen">
 
     <div id="test-header" class="hidden sticky top-0 bg-white shadow-md p-4 z-50 border-b-2 border-slate-100">
         <div class="max-w-4xl mx-auto flex justify-between items-center">
-            <h2 id="test-title-display" class="font-bold text-slate-800 text-sm truncate w-1/2 uppercase tracking-tighter">Loading...</h2>
+            <h2 id="test-title-display" class="font-bold text-slate-800 text-sm truncate w-1/2 uppercase">Loading...</h2>
             <div class="flex items-center gap-3">
-                <div id="timer" class="bg-red-500 text-white px-4 py-1 rounded-full font-black text-sm shadow-lg animate-pulse">00:00</div>
-                <button onclick="finishTest()" class="bg-blue-900 text-white px-4 py-1 rounded-lg text-xs font-bold hover:bg-black transition">SUBMIT</button>
+                <div id="timer" class="bg-red-500 text-white px-4 py-1 rounded-full font-black text-sm shadow-lg">00:00</div>
+                <button onclick="finishTest()" class="bg-blue-900 text-white px-4 py-1 rounded-lg text-xs font-bold">SUBMIT</button>
             </div>
         </div>
     </div>
@@ -32,48 +34,48 @@
             <div class="flex justify-between items-center mb-4">
                 <span id="q-count" class="text-[10px] font-black text-blue-600 bg-blue-50 px-3 py-1 rounded-full uppercase">Question 1</span>
             </div>
-            <h3 id="q-text" class="text-base font-bold text-slate-800 mb-6 leading-snug">Loading Question...</h3>
+            <h3 id="q-text" class="mb-6">Loading Question...</h3>
             <div id="options-container" class="space-y-3"></div>
             
             <div class="flex justify-between mt-8 gap-4">
                 <button id="prev-btn" onclick="prevQ()" class="flex-1 bg-slate-100 py-3 rounded-xl font-bold text-slate-500 hidden text-sm">PREVIOUS</button>
-                <button id="next-btn" onclick="nextQ()" class="flex-1 bg-blue-900 text-white py-3 rounded-xl font-bold text-sm shadow-blue-200 shadow-lg">NEXT QUESTION</button>
+                <button id="next-btn" onclick="nextQ()" class="flex-1 bg-blue-900 text-white py-3 rounded-xl font-bold text-sm shadow-lg">NEXT QUESTION</button>
             </div>
         </div>
     </div>
 
     <div id="result-screen" class="hidden p-4 max-w-4xl mx-auto">
         <div class="bg-blue-900 text-white p-8 rounded-[3rem] text-center shadow-2xl mb-8 border-b-8 border-yellow-400">
-            <h1 class="text-3xl font-black mb-2">TEST RESULT</h1>
+            <h1 class="text-3xl font-black mb-2 uppercase">Test Result</h1>
             <div class="flex justify-around gap-4 mt-6">
-                <div class="bg-white/10 p-4 rounded-3xl flex-1">
-                    <p class="text-[10px] opacity-60">Score</p>
+                <div class="bg-white/10 p-4 rounded-3xl flex-1 border border-white/10">
+                    <p class="text-[10px] opacity-60 uppercase">Score</p>
                     <h2 id="res-score" class="text-3xl font-black text-yellow-400">0</h2>
                 </div>
-                <div class="bg-white/10 p-4 rounded-3xl flex-1">
-                    <p class="text-[10px] opacity-60">Accuracy</p>
+                <div class="bg-white/10 p-4 rounded-3xl flex-1 border border-white/10">
+                    <p class="text-[10px] opacity-60 uppercase">Accuracy</p>
                     <h2 id="res-acc" class="text-3xl font-black text-green-400">0%</h2>
                 </div>
             </div>
 
             <div id="history-box" class="mt-6 text-left bg-black/20 p-4 rounded-2xl hidden">
                 <p class="text-[10px] font-bold mb-2 uppercase tracking-widest text-yellow-400">Previous Attempts</p>
-                <div id="history-list" class="space-y-1 max-h-24 overflow-y-auto pr-2"></div>
+                <div id="history-list" class="space-y-1 max-h-32 overflow-y-auto"></div>
             </div>
 
-            <button onclick="goToHome()" class="mt-8 bg-white text-blue-900 px-8 py-3 rounded-xl font-black text-xs uppercase tracking-widest">Go To Home</button>
+            <button onclick="goToHome()" class="mt-8 bg-white text-blue-900 px-8 py-3 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg">Back to Home</button>
         </div>
 
         <h3 class="font-black text-slate-800 mb-4 px-4 uppercase text-sm flex justify-between items-center">
             <span>Detailed Analysis</span>
-            <span id="analysis-counter" class="text-blue-600">1/10</span>
+            <span id="analysis-counter" class="text-blue-600 bg-blue-50 px-3 py-1 rounded-full text-[10px]">1/10</span>
         </h3>
         
         <div id="analysis-list" class="space-y-4"></div>
 
         <div class="flex justify-between mt-6 gap-4 pb-24 px-2">
-            <button id="prev-anal" onclick="moveAnalysis(-1)" class="flex-1 bg-white border-2 py-3 rounded-xl font-bold text-sm">PREV</button>
-            <button id="next-anal" onclick="moveAnalysis(1)" class="flex-1 bg-slate-800 text-white py-3 rounded-xl font-bold text-sm">NEXT</button>
+            <button id="prev-anal" onclick="moveAnalysis(-1)" class="flex-1 bg-white border-2 py-3 rounded-xl font-bold text-sm shadow-sm transition-all">PREVIOUS</button>
+            <button id="next-anal" onclick="moveAnalysis(1)" class="flex-1 bg-slate-800 text-white py-3 rounded-xl font-bold text-sm shadow-lg transition-all">NEXT</button>
         </div>
     </div>
 
@@ -86,23 +88,22 @@
 
         window.onload = async () => {
             const snap = await getDoc(doc(db, "tests", testId));
-            if(!snap.exists()) return;
+            if(!snap.exists()) return alert("Test data not found!");
             testData = snap.data();
             timeLeft = testData.questions.length * 60; 
             document.getElementById('test-title-display').innerText = testData.title;
             
-            // ✅ बैक बटन लॉक करना
+            // ✅ बैक बटन लॉक
             history.pushState(null, null, location.href);
-            window.onpopstate = () => {
+            window.onpopstate = function() {
                 if(!isSubmitting) {
-                    if(confirm("सावधान! टेस्ट अभी जारी है। क्या आप सच में छोड़ना चाहते हैं? पहले सबमिट करें!")) {
+                    if(confirm("सावधान! टेस्ट सबमिट नहीं हुआ है। क्या आप वाकई छोड़ना चाहते हैं?")) {
                         window.location.href = 'dashboard.html';
                     } else {
                         history.pushState(null, null, location.href);
                     }
                 }
             };
-
             startTest();
         };
 
@@ -122,7 +123,7 @@
             q.options.forEach((opt, i) => {
                 const isSelected = answers[currentQ] === i;
                 container.innerHTML += `
-                    <div onclick="selectOpt(${i})" class="group p-3 border-2 rounded-xl cursor-pointer transition-all flex items-center gap-3 ${isSelected ? 'border-blue-900 bg-blue-50' : 'border-slate-100 hover:bg-slate-50'}">
+                    <div onclick="selectOpt(${i})" class="group p-3 border-2 rounded-xl cursor-pointer transition-all flex items-center gap-3 ${isSelected ? 'border-blue-900 bg-blue-50' : 'border-slate-100 hover:border-blue-200'}">
                         <span class="w-8 h-8 flex items-center justify-center rounded-lg border-2 font-black text-xs ${isSelected ? 'bg-blue-900 text-white' : 'bg-white text-slate-400'}">${String.fromCharCode(65+i)}</span>
                         <p class="text-sm font-bold ${isSelected ? 'text-blue-900' : 'text-slate-600'}">${opt}</p>
                     </div>`;
@@ -132,37 +133,41 @@
         }
 
         window.selectOpt = (i) => { answers[currentQ] = i; showQuestion(); };
-        window.nextQ = () => { 
-            if(currentQ < testData.questions.length - 1) { currentQ++; showQuestion(); } 
-            else { finishTest(); }
-        };
+        window.nextQ = () => { if(currentQ < testData.questions.length - 1) { currentQ++; showQuestion(); } else { finishTest(); } };
         window.prevQ = () => { if(currentQ > 0) { currentQ--; showQuestion(); } };
 
         function startTimer() {
             timerInterval = setInterval(() => {
                 let m = Math.floor(timeLeft / 60), s = timeLeft % 60;
                 document.getElementById('timer').innerText = `${m < 10 ? '0'+m : m}:${s < 10 ? '0'+s : s}`;
-                if(timeLeft <= 0) { finishTest(); }
+                if(timeLeft <= 0) { clearInterval(timerInterval); finishTest(); }
                 timeLeft--;
             }, 1000);
         }
 
         window.finishTest = async () => {
+            if(isSubmitting) return;
             if(timeLeft > 0 && !confirm("क्या आप टेस्ट सबमिट करना चाहते हैं?")) return;
+            
             isSubmitting = true;
             clearInterval(timerInterval);
+            
             let score = 0;
             testData.questions.forEach((q, i) => { if(answers[i] === q.answer) score++; });
             let acc = Math.round((score / testData.questions.length) * 100);
 
-            await addDoc(collection(db, "results"), {
-                testId, userId: auth.currentUser.uid, score, accuracy: acc, timestamp: serverTimestamp()
-            });
-
-            loadHistoryAndShowResult(score, acc);
+            // ✅ तुरंत रिज़ल्ट दिखाओ, Firebase का इंतज़ार मत करो (ताकि स्क्रीन न अटके)
+            renderProfessionalAnalysis(score, acc);
+            
+            try {
+                await addDoc(collection(db, "results"), {
+                    testId, userId: auth.currentUser.uid, score, accuracy: acc, timestamp: serverTimestamp()
+                });
+                loadHistory(); // बैकग्राउंड में हिस्ट्री लोड होगी
+            } catch (e) { console.error("Error saving result:", e); }
         };
 
-        async function loadHistoryAndShowResult(score, acc) {
+        async function loadHistory() {
             const hSnap = await getDocs(query(collection(db, "results"), where("testId", "==", testId), where("userId", "==", auth.currentUser.uid), orderBy("timestamp", "desc")));
             if(!hSnap.empty) {
                 const hList = document.getElementById('history-list');
@@ -170,20 +175,20 @@
                 hSnap.forEach(doc => {
                     const d = doc.data();
                     const date = d.timestamp ? d.timestamp.toDate().toLocaleDateString('hi-IN') : 'अभी';
-                    hList.innerHTML += `<div class="flex justify-between text-[10px] border-b border-white/5 py-1"><span>📅 ${date}</span> <span class="font-bold">Score: ${d.score}/${testData.questions.length}</span></div>`;
+                    hList.innerHTML += `<div class="flex justify-between text-[10px] border-b border-white/5 py-2 text-white/80 font-medium"><span>📅 ${date}</span> <span>Score: ${d.score}/${testData.questions.length}</span></div>`;
                 });
                 document.getElementById('history-box').classList.remove('hidden');
             }
-            renderProfessionalAnalysis(score, acc);
         }
 
         function renderProfessionalAnalysis(score, acc) {
             document.getElementById('test-header').classList.add('hidden');
             document.getElementById('test-screen').classList.add('hidden');
-            document.getElementById('res-score').innerText = score + "/" + testData.questions.length;
-            document.getElementById('res-acc').innerText = acc + "%";
+            document.getElementById('res-score').innerText = `${score} / ${testData.questions.length}`;
+            document.getElementById('res-acc').innerText = `${acc}%`;
             
             const list = document.getElementById('analysis-list');
+            list.innerHTML = "";
             testData.questions.forEach((q, i) => {
                 const userChoice = answers[i], correctChoice = q.answer;
                 const isCorrect = userChoice === correctChoice;
@@ -193,15 +198,9 @@
                     let label = "";
                     if(idx === correctChoice) { border = "border-green-500 bg-green-50 text-green-700 font-bold"; label = "✓ CORRECT ANSWER"; }
                     else if(idx === userChoice && !isCorrect) { border = "border-red-500 bg-red-50 text-red-700 font-bold"; label = "✕ WRONG ANSWER"; }
-                    optHtml += `<div class="p-3 border-2 rounded-xl mb-2 text-xs flex justify-between items-center ${border}">
-                        <span><b>${String.fromCharCode(65+idx)}.</b> ${opt}</span>
-                        <span class="text-[8px] font-black">${label}</span>
-                    </div>`;
+                    optHtml += `<div class="p-3 border-2 rounded-xl mb-2 text-xs flex justify-between items-center ${border}"><span><b>${String.fromCharCode(65+idx)}.</b> ${opt}</span><span class="text-[8px] font-black uppercase">${label}</span></div>`;
                 });
-                list.innerHTML += `<div class="analysis-card bg-white p-5 rounded-[2rem] shadow-sm border-t-8 ${isCorrect ? 'border-green-500' : 'border-red-500'} ${i === 0 ? 'active' : ''}">
-                    <p class="text-sm font-bold text-slate-800 mb-5">${q.question}</p>
-                    <div class="space-y-1">${optHtml}</div>
-                </div>`;
+                list.innerHTML += `<div class="analysis-card bg-white p-5 rounded-[2rem] shadow-sm border-t-8 ${isCorrect ? 'border-green-500' : 'border-red-500'} ${i === 0 ? 'active' : ''}"><p class="text-sm font-bold text-slate-800 mb-5 leading-relaxed">${q.question}</p><div class="space-y-1">${optHtml}</div></div>`;
             });
             updateAnalysisCounter();
             document.getElementById('result-screen').classList.remove('hidden');
