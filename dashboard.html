@@ -10,7 +10,7 @@
 
     <style>
         body { font-family: 'Poppins', 'Noto Sans Devanagari', sans-serif; background: #f0f4f8; margin: 0; padding: 0; display: flex; flex-direction: column; min-height: 100vh; overflow-x: hidden; }
-        .main-wrapper { flex: 1; padding-top: 80px; } /* Fixed header ke liye padding */
+        .main-wrapper { flex: 1; padding-top: 85px; } 
 
         header { 
             background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%); 
@@ -40,15 +40,20 @@
         
         .folder-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
         .folder-card { background: #fff; padding: 20px 10px; border-radius: 15px; border: 1px solid #e2e8f0; text-align: center; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
-        .folder-card:hover { transform: translateY(-3px); border-color: #fbbf24; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+        .folder-card:hover { transform: translateY(-3px); border-color: #fbbf24; }
         .folder-icon { width: 45px; height: 45px; margin: 0 auto 8px; display: flex; align-items: center; justify-content: center; }
 
         .test-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
-        .test-card { background: white; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0; }
+        .test-card { background: white; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
 
-        footer { text-align: center; padding: 30px 20px; background: #fff; border-top: 1px solid #e2e8f0; margin-top: auto; }
-        .footer-red-btn { background: #ef4444; color: #fff; font-size: 10px; font-weight: 800; padding: 4px 15px; border-radius: 20px; border: none; margin-bottom: 10px; cursor: pointer; text-transform: uppercase; }
-        .copyright-text { font-size: 11px; color: #64748b; font-weight: 600; }
+        footer { text-align: center; padding: 25px 20px; background: #fff; border-top: 1px solid #e2e8f0; margin-top: auto; }
+        .about-box { background: #f8fafc; padding: 15px; border-radius: 12px; border: 1px dashed #cbd5e1; margin-bottom: 15px; max-width: 500px; margin-left: auto; margin-right: auto; }
+        .about-box h4 { font-size: 12px; font-weight: 800; color: #0f172a; margin-bottom: 5px; }
+        .about-box p { font-size: 11px; color: #475569; line-height: 1.5; margin: 0; }
+        
+        .footer-red-btn { background: #ef4444; color: #fff; font-size: 10px; font-weight: 800; padding: 6px 20px; border-radius: 20px; border: none; margin-bottom: 10px; cursor: pointer; transition: 0.2s; }
+        .footer-red-btn:hover { background: #dc2626; transform: scale(1.05); }
+        .copyright-text { font-size: 10px; color: #64748b; font-weight: 600; margin-top: 5px; }
 
         #loading-screen { position: fixed; inset: 0; background: white; z-index: 1000; display: flex; justify-content: center; align-items: center; }
     </style>
@@ -90,7 +95,7 @@
         <div class='main-container'>
             <div class="navigation-path-box">
                 <div class="flex items-center gap-2">
-                    <button id="back-btn" class="hidden text-blue-600 font-bold text-xs bg-blue-50 px-3 py-1.5 rounded-lg">⬅️ Back</button>
+                    <button id="back-btn" class="hidden text-blue-600 font-bold text-xs bg-blue-50 px-3 py-1.5 rounded-lg shadow-sm">⬅️ Back</button>
                     <p class="text-sm text-gray-500 font-medium" id="path-text">Test Series 2026</p>
                 </div>
             </div>
@@ -102,7 +107,11 @@
     </div>
 
     <footer>
-        <button class="footer-red-btn">Help & Support</button>
+        <div class="about-box">
+            <h4>ABOUT US</h4>
+            <p>यह प्लेटफार्म <b>Janz Group</b> द्वारा विद्यार्थियों को ऑनलाइन प्रैक्टिस की सुविधा प्रदान करने के लिए समर्पित है।</p>
+        </div>
+        <button class="footer-red-btn" onclick="window.location.href='mailto:janztales@gmail.com'">Help & Support</button>
         <p class="copyright-text">©2026 Janz Education संचालित By Janz Group</p>
     </footer>
 
@@ -121,7 +130,6 @@
         let viewState = { level: 'exam', exam: '', subject: '' };
         const ADMIN_EMAIL = "mdayubjanz@gmail.com";
 
-        // 👇 Professional Subject Icon (SVG) 👇
         const subjectIconSVG = `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-10 h-10"><path d="M19 3H5C3.89543 3 3 3.89543 3 5V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V5C21 3.89543 20.1046 3 19 3Z" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 7H17" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 12H17" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 17H13" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
         window.toggleSidebar = () => {
@@ -174,10 +182,10 @@
                 const tests = allTests.filter(t => t.exam === viewState.exam && t.subject === viewState.subject);
                 tests.forEach(test => {
                     contentArea.innerHTML += `
-                        <div class="test-card shadow-sm">
+                        <div class="test-card shadow-sm p-4">
                             <h4 class="font-bold text-sm text-slate-800">${test.title}</h4>
                             <p class="text-[10px] text-gray-500 mt-1">📝 ${test.questions.length} Qs • ⏳ ${test.duration} min</p>
-                            <button onclick="startTest('${test.id}')" class="w-full bg-blue-700 text-white mt-3 py-2 rounded-lg font-bold text-xs uppercase">Attempt Now</button>
+                            <button onclick="startTest('${test.id}')" class="w-full bg-blue-700 text-white mt-3 py-2 rounded-lg font-bold text-xs uppercase shadow-md">Attempt Now</button>
                         </div>`;
                 });
             }
