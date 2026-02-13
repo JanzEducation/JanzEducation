@@ -127,6 +127,7 @@
         const backBtn = document.getElementById('back-btn');
 
         let allTests = [];
+        let userResults = new Set(); // 🔥 नया: रिज़ल्ट याद रखने के लिए
         let viewState = { level: 'exam', exam: '', subject: '' };
         const ADMIN_EMAIL = "mdayubjanz@gmail.com";
 
@@ -141,6 +142,12 @@
             if (user) {
                 if(user.email === ADMIN_EMAIL) { window.location.href = "admin.html"; return; }
                 document.getElementById('sidebar-user-name').innerText = user.displayName || "Student";
+                
+                // 🔥 नया: Firebase से पुराने टेस्ट का रिकॉर्ड ला रहा है
+                const resSnap = await getDocs(query(collection(db, "results"), where("userId", "==", user.uid)));
+                userResults.clear();
+                resSnap.forEach(doc => userResults.add(doc.data().testId));
+
                 const testSnap = await getDocs(collection(db, "tests"));
                 allTests = testSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 allTests.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
@@ -180,12 +187,29 @@
                 contentArea.className = "test-grid";
                 pathText.innerText = viewState.subject;
                 const tests = allTests.filter(t => t.exam === viewState.exam && t.subject === viewState.subject);
+                
                 tests.forEach(test => {
+                    // 🔥 नया: चेक कर रहा है कि टेस्ट दिया है या नहीं
+                    const isDone = userResults.has(test.id); 
+
                     contentArea.innerHTML += `
                         <div class="test-card shadow-sm p-4">
                             <h4 class="font-bold text-sm text-slate-800">${test.title}</h4>
                             <p class="text-[10px] text-gray-500 mt-1">📝 ${test.questions.length} Qs • ⏳ ${test.duration} min</p>
-                            <button onclick="startTest('${test.id}')" class="w-full bg-blue-700 text-white mt-3 py-2 rounded-lg font-bold text-xs uppercase shadow-md">Attempt Now</button>
+                            
+                            <div class="flex gap-2 mt-3">
+                                <button onclick="startTest('${test.id}')" 
+                                    class="flex-1 py-2 rounded-lg font-bold text-xs uppercase shadow-md transition-all
+                                    ${isDone ? 'bg-amber-500 text-white' : 'bg-blue-700 text-white'}">
+                                    ${isDone ? '🔄 Re-attempt' : '▶ Attempt Now'}
+                                </button>
+                                
+                                ${isDone ? `
+                                <button onclick="window.location.href='test-player.html?id=${test.id}&view=history'" 
+                                    class="bg-slate-100 text-slate-600 px-4 py-2 rounded-lg font-bold text-xs uppercase shadow-sm border border-slate-200">
+                                    History
+                                </button>` : ''}
+                            </div>
                         </div>`;
                 });
             }
