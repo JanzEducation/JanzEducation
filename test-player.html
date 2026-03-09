@@ -82,45 +82,48 @@
         let isHistoryView = new URLSearchParams(window.location.search).get('view') === 'history';
         
         let testData, currentQ = 0, currentAnal = 0, answers = {}, timeLeft, timerInterval, isSubmitting = false;
+        
+        // 🔥 नया: करंट यूज़र को ग्लोबल सेव कर लिया
+        let currentUser = null; 
 
         onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                try {
-                    const snap = await getDoc(doc(db, "tests", testId));
-                    if(!snap.exists()) {
-                        alert("टेस्ट नहीं मिला!");
-                        return window.location.href = 'dashboard.html';
+            currentUser = user; // सेव कर लिया
+            
+            try {
+                // 🔥 नया: टेस्ट का डेटा बिना लॉगिन वालों को भी मिलेगा
+                const snap = await getDoc(doc(db, "tests", testId));
+                if(!snap.exists()) {
+                    alert("टेस्ट नहीं मिला!");
+                    return window.location.href = 'dashboard.html';
+                }
+                testData = snap.data();
+                timeLeft = testData.questions.length * 60;
+                document.getElementById('test-title-display').innerText = testData.title;
+
+                history.pushState(null, null, location.href);
+                window.onpopstate = () => {
+                    if(!isSubmitting && !isHistoryView) {
+                        if(confirm("सावधान! पहले सबमिट करें!")) window.location.href='dashboard.html';
+                        else history.pushState(null, null, location.href);
+                    } else {
+                        window.location.href='dashboard.html';
                     }
-                    testData = snap.data();
-                    timeLeft = testData.questions.length * 60;
-                    document.getElementById('test-title-display').innerText = testData.title;
+                };
 
-                    history.pushState(null, null, location.href);
-                    window.onpopstate = () => {
-                        if(!isSubmitting && !isHistoryView) {
-                            if(confirm("सावधान! पहले सबमिट करें!")) window.location.href='dashboard.html';
-                            else history.pushState(null, null, location.href);
-                        } else {
-                            window.location.href='dashboard.html';
-                        }
-                    };
-
-                    if (isHistoryView) {
+                if (isHistoryView) {
+                    if (user) {
+                        // लॉगिन वाले की हिस्ट्री
                         const hSnap = await getDocs(query(collection(db, "results"), where("testId", "==", testId), where("userId", "==", user.uid)));
-                        
                         if(!hSnap.empty) {
                             let allAttempts = [];
                             hSnap.forEach(doc => allAttempts.push(doc.data()));
-                            
                             allAttempts.sort((a, b) => {
                                 let timeA = (a.timestamp && a.timestamp.seconds) ? a.timestamp.seconds : 0;
                                 let timeB = (b.timestamp && b.timestamp.seconds) ? b.timestamp.seconds : 0;
                                 return timeB - timeA;
                             });
-
                             let latestResult = allAttempts[0]; 
                             answers = latestResult.answers || {}; 
-                            
                             renderAnalysis(latestResult.score, latestResult.accuracy);
                             loadHistoryList(user.uid); 
                         } else {
@@ -128,14 +131,24 @@
                             window.location.href = 'dashboard.html';
                         }
                     } else {
-                        startTest();
+                        // 🔥 नया: बिना लॉगिन वाले की लोकल हिस्ट्री
+                        let localHistory = JSON.parse(localStorage.getItem("janz_local_history")) || {};
+                        if(localHistory[testId]) {
+                            let latestResult = localHistory[testId];
+                            answers = latestResult.answers || {};
+                            renderAnalysis(latestResult.score, latestResult.accuracy);
+                            loadHistoryList(null);
+                        } else {
+                            alert("कोई पुरानी हिस्ट्री नहीं मिली!");
+                            window.location.href = 'dashboard.html';
+                        }
                     }
-                } catch (error) {
-                    alert("डेटा लोड होने में दिक्कत: " + error.message);
-                    window.location.href = 'dashboard.html';
+                } else {
+                    startTest();
                 }
-            } else {
-                window.location.href = "index.html";
+            } catch (error) {
+                alert("डेटा लोड होने में दिक्कत: " + error.message);
+                window.location.href = 'dashboard.html';
             }
         });
 
@@ -185,32 +198,57 @@
             renderAnalysis(score, acc);
             
             try {
-                await addDoc(collection(db, "results"), { 
-                    testId, userId: auth.currentUser.uid, score, accuracy: acc, answers: answers, timestamp: serverTimestamp() 
-                });
-                loadHistoryList(auth.currentUser.uid);
+                if (currentUser) {
+                    // 🔥 लॉगिन वाले का रिज़ल्ट Firebase में
+                    await addDoc(collection(db, "results"), { 
+                        testId, userId: currentUser.uid, score, accuracy: acc, answers: answers, timestamp: serverTimestamp() 
+                    });
+                    loadHistoryList(currentUser.uid);
+                } else {
+                    // 🔥 बिना लॉगिन वाले का रिज़ल्ट Local Storage में
+                    let localHistory = JSON.parse(localStorage.getItem("janz_local_history")) || {};
+                    localHistory[testId] = {
+                        score: score,
+                        accuracy: acc,
+                        answers: answers,
+                        timestamp: Date.now()
+                    };
+                    localStorage.setItem("janz_local_history", JSON.stringify(localHistory));
+                    loadHistoryList(null);
+                }
             } catch (e) { console.error("Error saving:", e); }
         };
 
         async function loadHistoryList(uid) {
             try {
-                const hSnap = await getDocs(query(collection(db, "results"), where("testId", "==", testId), where("userId", "==", uid)));
-                if(!hSnap.empty) {
-                    let allAttempts = [];
-                    hSnap.forEach(doc => allAttempts.push(doc.data()));
-                    allAttempts.sort((a, b) => {
-                        let timeA = (a.timestamp && a.timestamp.seconds) ? a.timestamp.seconds : 0;
-                        let timeB = (b.timestamp && b.timestamp.seconds) ? b.timestamp.seconds : 0;
-                        return timeB - timeA;
-                    });
+                const hList = document.getElementById('history-list'); 
+                hList.innerHTML = "";
 
-                    const hList = document.getElementById('history-list'); 
-                    hList.innerHTML = "";
-                    allAttempts.forEach(d => {
-                        const date = d.timestamp ? new Date(d.timestamp.seconds * 1000).toLocaleDateString('hi-IN') : 'अभी';
+                if (uid) {
+                    const hSnap = await getDocs(query(collection(db, "results"), where("testId", "==", testId), where("userId", "==", uid)));
+                    if(!hSnap.empty) {
+                        let allAttempts = [];
+                        hSnap.forEach(doc => allAttempts.push(doc.data()));
+                        allAttempts.sort((a, b) => {
+                            let timeA = (a.timestamp && a.timestamp.seconds) ? a.timestamp.seconds : 0;
+                            let timeB = (b.timestamp && b.timestamp.seconds) ? b.timestamp.seconds : 0;
+                            return timeB - timeA;
+                        });
+                        allAttempts.forEach(d => {
+                            const date = d.timestamp ? new Date(d.timestamp.seconds * 1000).toLocaleDateString('hi-IN') : 'अभी';
+                            hList.innerHTML += `<div class="flex justify-between py-1 border-b border-white/5 text-[10px]"><span>Date: ${date}</span> <span>Score: ${d.score}/${testData.questions.length}</span></div>`;
+                        });
+                        document.getElementById('history-box').classList.remove('hidden');
+                    }
+                } else {
+                    // 🔥 बिना लॉगिन वाले की हिस्ट्री दिखाने का कोड
+                    let localHistory = JSON.parse(localStorage.getItem("janz_local_history")) || {};
+                    if(localHistory[testId]) {
+                        let d = localHistory[testId];
+                        const date = new Date(d.timestamp).toLocaleDateString('hi-IN');
                         hList.innerHTML += `<div class="flex justify-between py-1 border-b border-white/5 text-[10px]"><span>Date: ${date}</span> <span>Score: ${d.score}/${testData.questions.length}</span></div>`;
-                    });
-                    document.getElementById('history-box').classList.remove('hidden');
+                        document.getElementById('history-box').classList.remove('hidden');
+                    }
                 }
             } catch(e) { console.error(e); }
         }
