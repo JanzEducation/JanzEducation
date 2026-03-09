@@ -1,7 +1,21 @@
 <!DOCTYPE html>
 <html lang="hi">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
     <title>Login | Janz Education</title>
+    <meta name="description" content="Janz Education छात्र पोर्टल में सुरक्षित लॉगिन करें।">
+    <link rel="canonical" href="https://janzeducation.online/login.html">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Poppins', sans-serif; background: #f8fafc; }
+        .brand-font { font-family: 'Cinzel', serif; }
+        .glass-card { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); }
+    </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-6">
 
@@ -46,13 +60,13 @@
         import { auth, db } from "./config.js";
         import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-// ✅ यह कोड पुराने छात्रों को सीधा अंदर भेज देगा
-onAuthStateChanged(auth, (user) => {
-    if (user) {
-        // अगर छात्र पहले से लॉगिन है, तो उसे लॉगिन पेज मत दिखाओ
-        window.location.replace("dashboard.html");
-    }
-});
+        // ✅ यह कोड पुराने छात्रों को सीधा अंदर डैशबोर्ड पर भेज देगा
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                window.location.replace("dashboard.html");
+            }
+        });
+
         // 🔥 ORIGINAL IMPORTS (POPUP VALA)
         import { GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, browserPopupRedirectResolver } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -63,7 +77,6 @@ onAuthStateChanged(auth, (user) => {
             provider.setCustomParameters({ prompt: 'select_account' });
 
             try {
-                // यह वही कोड है जो पहले चल रहा था (Popup वाला)
                 const result = await signInWithPopup(auth, provider, browserPopupRedirectResolver);
                 const user = result.user;
 
@@ -81,7 +94,7 @@ onAuthStateChanged(auth, (user) => {
                     });
                 }
                 
-                // लॉगिन होते ही डैशबोर्ड पर भेजो
+                // लॉगिन होते ही सीधे डैशबोर्ड पर भेजो
                 window.location.href = "dashboard.html";
             } catch (error) {
                 console.error(error);
