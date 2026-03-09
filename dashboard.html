@@ -3,8 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard | Janz Education</title>
     
+    <title>Janz Education | Rajasthan Lab Assistant Free Mock Test & Updates</title>
+    
+    <meta name="description" content="Janz Education पर राजस्थान लैब असिस्टेंट 2026 के लिए बिल्कुल फ्री ऑनलाइन मॉक टेस्ट सीरीज़ दें और ताज़ा ब्लॉग अपडेट्स प्राप्त करें।">
+    
+    <meta name="keywords" content="Rajasthan Lab Assistant Mock Test, Janz Education, Free online test series, Lab Assistant 2026 Blog Updates">
+
     <link href='https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&family=Noto+Sans+Devanagari:wght@400;700&display=swap' rel='stylesheet'/>
     <script src='https://cdn.tailwindcss.com'></script>
 
@@ -146,14 +151,12 @@
             document.getElementById('sidebar-overlay').classList.toggle('active');
         };
 
-        // 🔥 नया: लॉगआउट फंक्शन को ग्लोबल कर दिया
         window.logoutUser = () => {
             signOut(auth).then(() => {
                 window.location.href = "dashboard.html";
             });
         };
 
-        // 🔥 नया: टेस्ट डेटा लाने का फंक्शन (लॉगिन/बिना लॉगिन दोनों के लिए)
         async function fetchTestsData() {
             try {
                 const testSnap = await getDocs(collection(db, "tests"));
@@ -172,17 +175,14 @@
             const authMenuItems = document.getElementById('auth-menu-items');
             
             if (user) {
-                // अगर बच्चा लॉगिन है
                 if(user.email === ADMIN_EMAIL) { window.location.href = "admin.html"; return; }
                 document.getElementById('sidebar-user-name').innerText = user.displayName || "Student";
                 
-                // साइडबार मेनू अपडेट (लॉगिन वाले)
                 authMenuItems.innerHTML = `
                     <li>👤 My Profile</li>
                     <li onclick="logoutUser()" style="color: #ef4444;">🚪 Logout</li>
                 `;
                 
-                // Firebase से रिज़ल्ट लाओ
                 try {
                     const resSnap = await getDocs(query(collection(db, "results"), where("userId", "==", user.uid)));
                     userResults.clear();
@@ -190,23 +190,19 @@
                 } catch(e) { console.log(e); }
 
             } else {
-                // 🔥 नया: अगर बच्चा बिना लॉगिन के आया है
                 document.getElementById('sidebar-user-name').innerText = "Guest Student";
                 
-                // साइडबार मेनू अपडेट (बिना लॉगिन वाले)
                 authMenuItems.innerHTML = `
                     <div class="login-btn-sidebar" onclick="window.location.href='login.html'">
                         🔐 Login / Register
                     </div>
                 `;
                 
-                // ब्राउज़र के लोकल स्टोरेज से रिज़ल्ट लाओ
                 userResults.clear();
                 let localHistory = JSON.parse(localStorage.getItem("janz_local_history")) || {};
                 Object.keys(localHistory).forEach(testId => userResults.add(testId));
             }
 
-            // अब डेटाबेस से टेस्ट की लिस्ट ले आओ (दोनों केस में)
             fetchTestsData();
         });
 
