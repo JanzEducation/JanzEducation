@@ -2,3 +2,5 @@ User-agent: *
 Disallow: /admin.html
 Disallow: /config.js
 Disallow: /README.md
+
+Sitemap: https://janzeducation.online/sitemap.xml
