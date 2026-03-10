@@ -121,7 +121,8 @@
     <script type="module">
         import { auth, db } from "./config.js";
         import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        // 🔥 यहाँ मैंने onSnapshot (लाइव कैमरा) जोड़ दिया है
+        import { collection, query, where, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const loader = document.getElementById('loading-screen');
         const contentArea = document.getElementById('content-area');
@@ -135,6 +136,9 @@
 
         const subjectIconSVG = `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-10 h-10"><path d="M19 3H5C3.89543 3 3 3.89543 3 5V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V5C21 3.89543 20.1046 3 19 3Z" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 7H17" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 12H17" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 17H13" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
+        // पेज का स्टेट एक ही बार सेट करो
+        history.replaceState({level: 'exam'}, "", "");
+
         window.toggleSidebar = () => {
             document.getElementById('sidebar').classList.toggle('active');
             document.getElementById('sidebar-overlay').classList.toggle('active');
@@ -144,50 +148,22 @@
             signOut(auth).then(() => { window.location.href = "dashboard.html"; });
         };
 
-        // 🔥 1. सबसे पहले लोकल कैश से डाटा उठाओ (0.01s Instant Load)
-        try {
-            let cachedTests = sessionStorage.getItem("janz_tests_cache");
-            if(cachedTests) {
-                allTests = JSON.parse(cachedTests);
-                if(allTests.length > 0) renderUI();
-            }
-        } catch(e) {}
+        // 🚀 ब्रह्मास्त्र: फायरबेस का लाइव स्नैपशॉट (कोई रिफ्रेश की ज़रूरत नहीं)
+        onSnapshot(collection(db, "tests"), (snapshot) => {
+            allTests = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            allTests.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+            
+            renderUI(); // डाटा आते ही तुरंत दिखाओ
+            loader.style.display = 'none'; // और लोडिंग हटा दो
+        }, (error) => {
+            console.error("Snapshot Error:", error);
+            loader.style.display = 'none';
+        });
 
-        // 🔥 2. फायरबेस से ताज़ा डाटा मंगाने का फंक्शन
-        let isFetching = false;
-        async function fetchTestsData() {
-            if(isFetching) return;
-            isFetching = true;
-            try {
-                const testSnap = await getDocs(collection(db, "tests"));
-                allTests = testSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                allTests.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
-                
-                // डाटा को सेशन में सेव कर दो ताकि अगली बार पलक झपकाते ही खुले
-                try { sessionStorage.setItem("janz_tests_cache", JSON.stringify(allTests)); } catch(e){}
-                
-                history.replaceState({level: 'exam'}, "", "");
-                renderUI(); 
-                loader.style.display = 'none'; 
-            } catch (error) {
-                console.error("Firebase Load Error:", error);
-                loader.style.display = 'none'; 
-            }
-            isFetching = false;
-        }
-
-        // पेज खुलते ही तुरंत फायर करो
-        fetchTestsData();
-
-        // 🔥 3. बैकग्राउंड में यूज़र चेक करो और अगर डाटा नहीं आया तो दोबारा लाओ (Auto-Retry)
+        // 👤 बैकग्राउंड में यूज़र चेक करो
         onAuthStateChanged(auth, async (user) => {
             const authMenuItems = document.getElementById('auth-menu-items');
             
-            // अगर फायरबेस के रूल्स की वजह से पहली बार डाटा फेल हो गया था, तो अब दोबारा मंगा लो
-            if(allTests.length === 0) {
-                await fetchTestsData();
-            }
-
             if (user) {
                 if(user.email === ADMIN_EMAIL) { window.location.href = "admin.html"; return; }
                 document.getElementById('sidebar-user-name').innerText = user.displayName || "Student";
@@ -214,7 +190,6 @@
         });
 
         function renderUI() {
-            // अगर सच में टेस्ट नहीं हैं, तो कुछ मत करो
             if(allTests.length === 0) return;
 
             contentArea.innerHTML = "";
