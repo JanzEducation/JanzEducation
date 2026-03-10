@@ -62,7 +62,6 @@
 
         #loading-screen { position: fixed; inset: 0; background: white; z-index: 1000; display: flex; justify-content: center; align-items: center; }
         
-        /* 🔥 नया: लॉगिन बटन का डिज़ाइन */
         .login-btn-sidebar { background: #ef4444; color: white; margin: 15px; padding: 12px; text-align: center; border-radius: 10px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .login-btn-sidebar:hover { background: #dc2626; }
     </style>
@@ -85,8 +84,7 @@
             <li onclick="window.location.href='dashboard.html'">🏠 Home</li>
             <li onclick="window.location.href='blog.html'">📰 Blog / Updates</li>
             
-            <div id="auth-menu-items">
-                </div>
+            <div id="auth-menu-items"></div>
         </ul>
 
         <div class="motivation-box">
@@ -157,7 +155,6 @@
             });
         };
 
-        // 🔥 बदलाव 1: टेस्ट मंगाने वाला फंक्शन सबसे पहले कॉल कर दिया
         async function fetchTestsData() {
             try {
                 const testSnap = await getDocs(collection(db, "tests"));
@@ -165,17 +162,15 @@
                 allTests.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
                 history.replaceState({level: 'exam'}, "", "");
                 renderUI(); 
-                loader.style.display = 'none'; // लोडिंग तुरंत बंद
+                loader.style.display = 'none'; 
             } catch (error) {
                 console.error("Error fetching tests:", error);
                 loader.style.display = 'none';
             }
         }
 
-        // 🚀 बिना लॉगिन का इंतज़ार किए तुरंत टेस्ट मंगा लो!
         fetchTestsData();
 
-        // 🔥 बदलाव 2: बैकग्राउंड में चुपचाप यूजर चेक करो
         onAuthStateChanged(auth, async (user) => {
             const authMenuItems = document.getElementById('auth-menu-items');
             
@@ -192,7 +187,7 @@
                     const resSnap = await getDocs(query(collection(db, "results"), where("userId", "==", user.uid)));
                     userResults.clear();
                     resSnap.forEach(doc => userResults.add(doc.data().testId));
-                    if (allTests.length > 0) renderUI(); // बटन अपडेट करने के लिए दोबारा रेंडर
+                    if (allTests.length > 0) renderUI(); 
                 } catch(e) { console.log(e); }
 
             } else {
@@ -205,9 +200,16 @@
                 `;
                 
                 userResults.clear();
-                let localHistory = JSON.parse(localStorage.getItem("janz_local_history")) || {};
-                Object.keys(localHistory).forEach(testId => userResults.add(testId));
-                if (allTests.length > 0) renderUI(); // गेस्ट के बटन अपडेट करने के लिए रेंडर
+                
+                // 🔥 सुरक्षा कवच (Incognito Error Fix)
+                try {
+                    let localHistory = JSON.parse(localStorage.getItem("janz_local_history")) || {};
+                    Object.keys(localHistory).forEach(testId => userResults.add(testId));
+                } catch (e) {
+                    console.warn("Incognito Mode Active: Local storage is blocked, guest history hidden.");
+                }
+
+                if (allTests.length > 0) renderUI(); 
             }
         });
 
