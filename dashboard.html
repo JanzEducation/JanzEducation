@@ -112,7 +112,7 @@
     <footer>
         <div class="about-box">
             <h4>ABOUT US</h4>
-            <p>यह प्लेटफार्म <b>Janz Group</b> द्वारा विद्यार्थियों को ऑनलाइन प्रैक्टिस की सुविधा प्रदान करने के लिए समर्पित है।</p>
+            <p>यह प्लेटफार्म <b>Janz Group</b> द्वारा विद्यार्थियों को অনলাইনে प्रैक्टिस की सुविधा प्रदान करने के लिए समर्पित है।</p>
         </div>
         <button class="footer-red-btn" onclick="window.location.href='mailto:janztales@gmail.com'">Help & Support</button>
         <p class="copyright-text">©2026 Janz Education संचालित By Janz Group</p>
@@ -146,26 +146,35 @@
             signOut(auth).then(() => { window.location.href = "index.html"; });
         };
 
-        let isDataReady = false;
-
-        // 1. बिना किसी बकवास मैसेज के चुपचाप डेटा मंगाओ
-        function loadData() {
+        // 🔥 असली इलाज: जब तक फायरबेस असली डेटा न दे, तब तक हथौड़ा मारते रहो!
+        let retryCount = 0;
+        function loadRealData() {
             getDocs(collection(db, "tests")).then(snap => {
+                // अगर फायरबेस ने 'खाली कैश' दिया, तो कोडिंग धोखा नहीं खाएगी, 0.5 सेकंड बाद फिर मंगाएगी!
+                if (snap.empty && retryCount < 10) {
+                    retryCount++;
+                    setTimeout(loadRealData, 500);
+                    return; 
+                }
+                
                 allTests = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 allTests.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
                 
-                isDataReady = true;
                 renderUI();
-                loader.style.display = 'none'; // टेस्ट आते ही लोडिंग हटाओ
-            }).catch(error => {
-                // अगर नेटवर्क या Incognito ने रोका, तो बिना कोई एरर दिखाए चुपचाप दोबारा कोशिश करो
-                setTimeout(loadData, 500); 
+                loader.style.display = 'none'; // टेस्ट आने के बाद ही पर्दा हटेगा
+            }).catch(e => {
+                if(retryCount < 10) {
+                    retryCount++;
+                    setTimeout(loadRealData, 500);
+                } else {
+                    loader.style.display = 'none';
+                }
             });
         }
 
-        loadData();
+        // पेज खुलते ही फंक्शन चालू!
+        loadRealData();
 
-        // 2. बैकग्राउंड में यूज़र चेक करो 
         onAuthStateChanged(auth, async (user) => {
             const authMenuItems = document.getElementById('auth-menu-items');
             
@@ -178,7 +187,7 @@
                     const resSnap = await getDocs(query(collection(db, "results"), where("userId", "==", user.uid)));
                     userResults.clear();
                     resSnap.forEach(doc => userResults.add(doc.data().testId));
-                    if(isDataReady) renderUI(); 
+                    if(allTests.length > 0) renderUI(); 
                 } catch(e) {}
             } else {
                 document.getElementById('sidebar-user-name').innerText = "Guest Student";
@@ -190,12 +199,12 @@
                     Object.keys(localHistory).forEach(testId => userResults.add(testId));
                 } catch (e) {}
                 
-                if(isDataReady) renderUI(); 
+                if(allTests.length > 0) renderUI(); 
             }
         });
 
         function renderUI() {
-            // 🔥 कोई फालतू एरर या टेक्स्ट नहीं। अगर टेस्ट नहीं हैं, तो कोडिंग चुप रहेगी।
+            // कोई मैसेज नहीं। 
             if (allTests.length === 0) return; 
 
             contentArea.innerHTML = "";
