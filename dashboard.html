@@ -106,10 +106,6 @@
 
             <h3 class="font-bold text-gray-700 mb-4 border-l-4 border-yellow-400 pl-3 uppercase text-xs" id="title-text">All Exams</h3>
             <div id="content-area" class="folder-grid"></div>
-            
-            <div id="no-data-msg" class="hidden text-center py-10">
-                <p class="text-gray-400 text-sm font-bold">अभी यहाँ कुछ भी उपलब्ध नहीं है।</p>
-            </div>
         </div>
     </div>
 
@@ -131,7 +127,6 @@
         const contentArea = document.getElementById('content-area');
         const pathText = document.getElementById('path-text');
         const backBtn = document.getElementById('back-btn');
-        const noDataBox = document.getElementById('no-data-msg');
 
         let allTests = [];
         let userResults = new Set(); 
@@ -149,7 +144,7 @@
             signOut(auth).then(() => { window.location.href = "dashboard.html"; });
         };
 
-        // 🔥 रॉकेट स्पीड: पेज खुलते ही तुरंत बिना किसी का इंतज़ार किए टेस्ट मंगा लो
+        // 🚀 तुरंत फायरबेस से टेस्ट खींचो और दिखाओ
         async function fetchInstantData() {
             try {
                 const testSnap = await getDocs(collection(db, "tests"));
@@ -157,18 +152,16 @@
                 allTests.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
                 
                 history.replaceState({level: 'exam'}, "", "");
-                renderUI(); // तुरंत टेस्ट दिखाओ!
-                loader.style.display = 'none'; // लोडिंग स्क्रीन हटाओ
+                renderUI(); 
+                loader.style.display = 'none'; 
             } catch (error) {
                 console.error(error);
                 loader.style.display = 'none';
             }
         }
 
-        // सीधा फंक्शन चला दो
         fetchInstantData();
 
-        // 🔥 बैकग्राउंड काम: अब आराम से चेक करो कि बच्चा कौन है
         onAuthStateChanged(auth, async (user) => {
             const authMenuItems = document.getElementById('auth-menu-items');
             
@@ -181,7 +174,7 @@
                     const resSnap = await getDocs(query(collection(db, "results"), where("userId", "==", user.uid)));
                     userResults.clear();
                     resSnap.forEach(doc => userResults.add(doc.data().testId));
-                    if (allTests.length > 0) renderUI(); // बटन को 'History' में बदलने के लिए दोबारा रेंडर करो
+                    if (allTests.length > 0) renderUI(); 
                 } catch(e) {}
             } else {
                 document.getElementById('sidebar-user-name').innerText = "Guest Student";
@@ -189,26 +182,17 @@
                 
                 userResults.clear();
                 try {
-                    // Incognito को ब्लॉक होने से बचाने के लिए try-catch
                     let localHistory = JSON.parse(localStorage.getItem("janz_local_history")) || {};
                     Object.keys(localHistory).forEach(testId => userResults.add(testId));
                 } catch (e) {}
                 
-                if (allTests.length > 0) renderUI(); // गेस्ट के बटन भी अपडेट करो
+                if (allTests.length > 0) renderUI(); 
             }
         });
 
         function renderUI() {
             contentArea.innerHTML = "";
             
-            if (allTests.length === 0) {
-                noDataBox.classList.remove('hidden');
-                contentArea.className = "";
-                return;
-            } else {
-                noDataBox.classList.add('hidden');
-            }
-
             if (viewState.level === 'exam') {
                 contentArea.className = "folder-grid";
                 pathText.innerText = "Test Series 2026";
