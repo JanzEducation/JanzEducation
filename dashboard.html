@@ -135,6 +135,8 @@
 
         const subjectIconSVG = `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-10 h-10"><path d="M19 3H5C3.89543 3 3 3.89543 3 5V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V5C21 3.89543 20.1046 3 19 3Z" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 7H17" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 12H17" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 17H13" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
+        history.replaceState({level: 'exam'}, "", "");
+
         window.toggleSidebar = () => {
             document.getElementById('sidebar').classList.toggle('active');
             document.getElementById('sidebar-overlay').classList.toggle('active');
@@ -144,70 +146,79 @@
             signOut(auth).then(() => { window.location.href = "index.html"; });
         };
 
-        history.replaceState({level: 'exam'}, "", "");
+        // 🔥 सेफ्टी वॉल्व: अगर 7 सेकंड तक लोडिंग बंद नहीं हुई, तो एरर दिखाकर रिफ्रेश बटन दे दो 
+        let timeoutSafeguard = setTimeout(() => {
+            if(loader.style.display !== 'none') {
+                loader.style.display = 'none';
+                contentArea.innerHTML = `<div style="text-align:center; padding: 40px 20px;"><p style="color:#ef4444; font-size:14px; font-weight:bold;">डेटा लोड होने में समय लग रहा है।</p><button onclick="window.location.reload()" style="background:#2563eb; color:white; padding:10px 20px; border-radius:8px; margin-top:15px; font-weight:bold; box-shadow:0 2px 5px rgba(0,0,0,0.2);">फिर से ट्राई करें 🔄</button></div>`;
+            }
+        }, 7000);
 
-        // 🔥 STEP 1: पेज खुलते ही तुरंत फायरबेस से टेस्ट खींचो!
+        // 1. फायरबेस के दोनों काम (Auth और Tests) एक साथ चालू करो
+        let isAuthResolved = false;
+        let isTestsResolved = false;
+        let currentUser = null;
+
+        // यूज़र चेक करो
+        onAuthStateChanged(auth, (user) => {
+            currentUser = user;
+            isAuthResolved = true;
+            checkAndRender();
+        });
+
+        // टेस्ट मंगाओ
         getDocs(collection(db, "tests")).then(snap => {
             allTests = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             allTests.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
-            
-            // अगर तुरंत डेटा आ गया, तो स्क्रीन पर दिखा दो और लोडिंग हटा दो
-            if (allTests.length > 0) {
-                renderUI(); 
-                loader.style.display = 'none'; 
-            }
+            isTestsResolved = true;
+            checkAndRender();
         }).catch(e => {
-            console.log("Waiting for auth to fetch...");
-            // अगर इंकॉग्निटो/नेटवर्क ने रोका, तो लोडिंग स्क्रीन मत हटाओ, Auth का इंतज़ार करो!
+            console.error(e);
+            isTestsResolved = true; // अगर फेल हुआ तो भी आगे बढ़ो, अटको मत
+            checkAndRender();
         });
 
-        // 🔥 STEP 2: बैकग्राउंड में यूज़र चेक करो और डेटा पक्का मंगाओ
-        onAuthStateChanged(auth, async (user) => {
+        // 2. जब दोनों काम पूरे हो जाएं, तब ये फंक्शन चलेगा
+        async function checkAndRender() {
+            // अगर एक भी काम बाकी है, तो रुको
+            if (!isAuthResolved || !isTestsResolved) return;
+
+            // साइडबार सेट करो
             const authMenuItems = document.getElementById('auth-menu-items');
-            
-            if (user) {
-                if(user.email === ADMIN_EMAIL) { window.location.href = "admin.html"; return; }
-                document.getElementById('sidebar-user-name').innerText = user.displayName || "Student";
+            if (currentUser) {
+                if(currentUser.email === ADMIN_EMAIL) { window.location.href = "admin.html"; return; }
+                document.getElementById('sidebar-user-name').innerText = currentUser.displayName || "Student";
                 authMenuItems.innerHTML = `<li>👤 My Profile</li><li onclick="logoutUser()" style="color: #ef4444;">🚪 Logout</li>`;
+                
+                // लॉगिन है तो उसका रिज़ल्ट मंगाओ
+                try {
+                    const resSnap = await getDocs(query(collection(db, "results"), where("userId", "==", currentUser.uid)));
+                    userResults.clear();
+                    resSnap.forEach(doc => userResults.add(doc.data().testId));
+                } catch(e) {}
+
             } else {
                 document.getElementById('sidebar-user-name').innerText = "Guest Student";
                 authMenuItems.innerHTML = `<div class="login-btn-sidebar" onclick="window.location.href='login.html'">🔐 Login / Register</div>`;
-            }
-
-            // अगर Step 1 में डेटा नहीं आ पाया था, तो अब 100% लाओ!
-            if (allTests.length === 0) {
-                try {
-                    const snap = await getDocs(collection(db, "tests"));
-                    allTests = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    allTests.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
-                } catch (e) {
-                    console.error("Firebase Error:", e);
-                }
-            }
-
-            // यूज़र का रिज़ल्ट/हिस्ट्री मंगाओ
-            userResults.clear();
-            if (user) {
-                try {
-                    const resSnap = await getDocs(query(collection(db, "results"), where("userId", "==", user.uid)));
-                    resSnap.forEach(doc => userResults.add(doc.data().testId));
-                } catch(e) {}
-            } else {
+                
+                // गेस्ट है तो लोकल हिस्ट्री उठाओ (Incognito एरर से बचाकर)
+                userResults.clear();
                 try {
                     let localHistory = JSON.parse(localStorage.getItem("janz_local_history")) || {};
                     Object.keys(localHistory).forEach(testId => userResults.add(testId));
                 } catch (e) {}
             }
 
-            // 🔥 फाइनली सब कुछ स्क्रीन पर छापो और अब लोडिंग हटा दो!
-            renderUI();
+            // सब रेडी! अब स्क्रीन सेफर टाइमर को बंद करो और डाटा दिखाओ
+            clearTimeout(timeoutSafeguard);
             loader.style.display = 'none';
-        });
+            renderUI();
+        }
 
         function renderUI() {
             contentArea.innerHTML = "";
             
-            // अगर सच में फायरबेस में कोई टेस्ट नहीं है, तब ये मेसेज दिखाओ (खाली स्क्रीन नहीं)
+            // अगर सच में टेस्ट नहीं हैं (डेटाबेस खाली है) तो साफ बता दो
             if (allTests.length === 0) {
                 contentArea.innerHTML = `<div style="text-align:center; padding: 40px 20px; width: 100%; color: #94a3b8; font-size: 13px; font-weight: bold;">अभी यहाँ कोई टेस्ट उपलब्ध नहीं है।</div>`;
                 return;
