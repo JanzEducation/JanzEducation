@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <title>Janz Education | Rajasthan Lab Assistant Free Mock Test & Updates</title>
-    <meta name="description" content="Janz Education पर राजस्थान लैब असिस्टेंट 2026 के लिए बिल्कुल फ्री ऑनलाइन मॉक टेस्ट सीरीज़ दें और ताज़ा ब्लॉग अपडेट्स प्राप्त करें।">
+    <meta name="description" content="Janz Education पर राजस्थान लैब असिस्टेंट,RUHS CUET,BSTC के लिए बिल्कुल फ्री ऑनलाइन मॉक टेस्ट सीरीज़ दें और ताज़ा ब्लॉग अपडेट्स प्राप्त करें।">
     <link href='https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&family=Noto+Sans+Devanagari:wght@400;700&display=swap' rel='stylesheet'/>
     <script src='https://cdn.tailwindcss.com'></script>
 
@@ -146,26 +146,27 @@
             signOut(auth).then(() => { window.location.href = "index.html"; });
         };
 
-        // 🔥 सीधा फायरबेस से टेस्ट खींचो और स्क्रीन पर मारो (बिना किसी का इंतज़ार किए)
-        async function fetchTestsDirectly() {
+        // 1. सबसे सिंपल तरीका: सीधे टेस्ट मंगाओ और दिखाओ!
+        async function loadData() {
             try {
                 const snap = await getDocs(collection(db, "tests"));
                 allTests = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 allTests.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
                 
-                // जैसे ही टेस्ट मिले, तुरंत दिखाओ और लोडर बंद करो!
                 renderUI();
+                loader.style.display = 'none'; // टेस्ट आते ही लोडिंग हटाओ
+            } catch (error) {
+                console.error("Firebase Error:", error);
+                // अगर फायरबेस में सच में कोई एरर है, तो खाली मत छोड़ो, एरर दिखाओ ताकि पता चले बीमारी क्या है
+                contentArea.innerHTML = `<div style="text-align:center; padding: 20px; color: red; font-weight: bold;">फायरबेस से डेटा नहीं आ पाया। कृपया रिफ्रेश करें।</div>`;
                 loader.style.display = 'none';
-            } catch (e) {
-                console.error(e);
-                loader.style.display = 'none'; // एरर आए तो भी लोडिंग मत अटकाओ
             }
         }
 
-        // पेज खुलते ही तुरंत फायर कर दो
-        fetchTestsDirectly();
+        // पेज खुलते ही फंक्शन चलाओ
+        loadData();
 
-        // 👤 ये बैकग्राउंड में चुपचाप चलता रहेगा, इससे स्क्रीन लोडिंग पर कोई फर्क नहीं पड़ेगा
+        // 2. बैकग्राउंड में यूज़र चेक करो और 'History' बटन अपडेट करो
         onAuthStateChanged(auth, async (user) => {
             const authMenuItems = document.getElementById('auth-menu-items');
             
@@ -178,8 +179,8 @@
                     const resSnap = await getDocs(query(collection(db, "results"), where("userId", "==", user.uid)));
                     userResults.clear();
                     resSnap.forEach(doc => userResults.add(doc.data().testId));
+                    if(allTests.length > 0) renderUI(); 
                 } catch(e) {}
-
             } else {
                 document.getElementById('sidebar-user-name').innerText = "Guest Student";
                 authMenuItems.innerHTML = `<div class="login-btn-sidebar" onclick="window.location.href='login.html'">🔐 Login / Register</div>`;
@@ -189,16 +190,18 @@
                     let localHistory = JSON.parse(localStorage.getItem("janz_local_history")) || {};
                     Object.keys(localHistory).forEach(testId => userResults.add(testId));
                 } catch (e) {}
+                
+                if(allTests.length > 0) renderUI(); 
             }
-
-            // जब हिस्ट्री आ जाए, तो सिर्फ बटन अपडेट करने के लिए एक बार चुपचाप रेंडर कर दो
-            if(allTests.length > 0) renderUI();
         });
 
         function renderUI() {
-            if (allTests.length === 0) return; // कोई फालतू मैसेज नहीं, टेस्ट नहीं हैं तो कुछ मत करो
-            
             contentArea.innerHTML = "";
+            
+            if (allTests.length === 0) {
+                contentArea.innerHTML = `<div style="text-align:center; padding: 40px 20px; font-weight: bold; color: #64748b;">अभी यहाँ कोई टेस्ट उपलब्ध नहीं है।</div>`;
+                return;
+            }
             
             if (viewState.level === 'exam') {
                 contentArea.className = "folder-grid";
