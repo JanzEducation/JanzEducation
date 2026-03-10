@@ -157,20 +157,25 @@
             });
         };
 
+        // 🔥 बदलाव 1: टेस्ट मंगाने वाला फंक्शन सबसे पहले कॉल कर दिया
         async function fetchTestsData() {
             try {
                 const testSnap = await getDocs(collection(db, "tests"));
                 allTests = testSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 allTests.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
                 history.replaceState({level: 'exam'}, "", "");
-                renderUI();
-                loader.style.display = 'none';
+                renderUI(); 
+                loader.style.display = 'none'; // लोडिंग तुरंत बंद
             } catch (error) {
                 console.error("Error fetching tests:", error);
                 loader.style.display = 'none';
             }
         }
 
+        // 🚀 बिना लॉगिन का इंतज़ार किए तुरंत टेस्ट मंगा लो!
+        fetchTestsData();
+
+        // 🔥 बदलाव 2: बैकग्राउंड में चुपचाप यूजर चेक करो
         onAuthStateChanged(auth, async (user) => {
             const authMenuItems = document.getElementById('auth-menu-items');
             
@@ -187,6 +192,7 @@
                     const resSnap = await getDocs(query(collection(db, "results"), where("userId", "==", user.uid)));
                     userResults.clear();
                     resSnap.forEach(doc => userResults.add(doc.data().testId));
+                    if (allTests.length > 0) renderUI(); // बटन अपडेट करने के लिए दोबारा रेंडर
                 } catch(e) { console.log(e); }
 
             } else {
@@ -201,9 +207,8 @@
                 userResults.clear();
                 let localHistory = JSON.parse(localStorage.getItem("janz_local_history")) || {};
                 Object.keys(localHistory).forEach(testId => userResults.add(testId));
+                if (allTests.length > 0) renderUI(); // गेस्ट के बटन अपडेट करने के लिए रेंडर
             }
-
-            fetchTestsData();
         });
 
         function renderUI() {
