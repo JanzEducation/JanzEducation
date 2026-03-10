@@ -144,27 +144,50 @@
             signOut(auth).then(() => { window.location.href = "dashboard.html"; });
         };
 
-        // 🚀 तुरंत फायरबेस से टेस्ट खींचो और दिखाओ
-        async function fetchInstantData() {
+        // 🔥 1. सबसे पहले लोकल कैश से डाटा उठाओ (0.01s Instant Load)
+        try {
+            let cachedTests = sessionStorage.getItem("janz_tests_cache");
+            if(cachedTests) {
+                allTests = JSON.parse(cachedTests);
+                if(allTests.length > 0) renderUI();
+            }
+        } catch(e) {}
+
+        // 🔥 2. फायरबेस से ताज़ा डाटा मंगाने का फंक्शन
+        let isFetching = false;
+        async function fetchTestsData() {
+            if(isFetching) return;
+            isFetching = true;
             try {
                 const testSnap = await getDocs(collection(db, "tests"));
                 allTests = testSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 allTests.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
                 
+                // डाटा को सेशन में सेव कर दो ताकि अगली बार पलक झपकाते ही खुले
+                try { sessionStorage.setItem("janz_tests_cache", JSON.stringify(allTests)); } catch(e){}
+                
                 history.replaceState({level: 'exam'}, "", "");
                 renderUI(); 
                 loader.style.display = 'none'; 
             } catch (error) {
-                console.error(error);
-                loader.style.display = 'none';
+                console.error("Firebase Load Error:", error);
+                loader.style.display = 'none'; 
             }
+            isFetching = false;
         }
 
-        fetchInstantData();
+        // पेज खुलते ही तुरंत फायर करो
+        fetchTestsData();
 
+        // 🔥 3. बैकग्राउंड में यूज़र चेक करो और अगर डाटा नहीं आया तो दोबारा लाओ (Auto-Retry)
         onAuthStateChanged(auth, async (user) => {
             const authMenuItems = document.getElementById('auth-menu-items');
             
+            // अगर फायरबेस के रूल्स की वजह से पहली बार डाटा फेल हो गया था, तो अब दोबारा मंगा लो
+            if(allTests.length === 0) {
+                await fetchTestsData();
+            }
+
             if (user) {
                 if(user.email === ADMIN_EMAIL) { window.location.href = "admin.html"; return; }
                 document.getElementById('sidebar-user-name').innerText = user.displayName || "Student";
@@ -174,7 +197,7 @@
                     const resSnap = await getDocs(query(collection(db, "results"), where("userId", "==", user.uid)));
                     userResults.clear();
                     resSnap.forEach(doc => userResults.add(doc.data().testId));
-                    if (allTests.length > 0) renderUI(); 
+                    if(allTests.length > 0) renderUI(); 
                 } catch(e) {}
             } else {
                 document.getElementById('sidebar-user-name').innerText = "Guest Student";
@@ -186,11 +209,14 @@
                     Object.keys(localHistory).forEach(testId => userResults.add(testId));
                 } catch (e) {}
                 
-                if (allTests.length > 0) renderUI(); 
+                if(allTests.length > 0) renderUI(); 
             }
         });
 
         function renderUI() {
+            // अगर सच में टेस्ट नहीं हैं, तो कुछ मत करो
+            if(allTests.length === 0) return;
+
             contentArea.innerHTML = "";
             
             if (viewState.level === 'exam') {
