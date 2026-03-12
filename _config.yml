@@ -2,3 +2,6 @@ name: Janz Education
 description: Rajasthan Lab Assistant Free Mock Test & Updates
 url: "https://janzeducation.online"
 markdown: kramdown
+
+timezone: Asia/Kolkata
+future: true
