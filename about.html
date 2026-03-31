@@ -6,7 +6,7 @@
 
     <title>About Us | Janz Education - Founded by Mohammad Ayub Janz</title>
     <meta name="description" content="Janz Education is a premium online learning portal in Rajasthan offering free mock tests and study materials. Founded by Mohammad Ayub Janz.">
-    <meta name="keywords" content="Janz Education, Mohammad Ayub Janz, RBSE Mock Tests, Lab Assistant, REET, BSTC, Rajasthan Board, Janz Tales">
+    <meta name="keywords" content="Janz Education, Mohammad Ayub Janz, RBSE Mock Tests, Lab Assistant, REET, BSTC, Rajasthan Board">
     <meta name="author" content="Mohammad Ayub Janz">
     <meta name="robots" content="index, follow">
 
@@ -16,7 +16,6 @@
       "@type": "EducationalOrganization",
       "name": "Janz Education",
       "url": "https://janzeducation.online",
-      "logo": "https://janzeducation.online/logo.png",
       "description": "Premium online learning portal for Rajasthan Board and competitive exams.",
       "founder": {
         "@type": "Person",
@@ -34,36 +33,27 @@
     </script>
 
     <style>
-        :root {
-            --primary-blue: #1e3a8a;
-            --secondary-blue: #2563eb;
-            --text-dark: #334155;
-            --bg-light: #f8fafc;
-        }
         body {
             font-family: 'Segoe UI', Roboto, Helvetica, sans-serif;
-            background-color: var(--bg-light);
-            color: var(--text-dark);
-            line-height: 1.6;
+            background-color: #ffffff; /* पूरा पेज एकदम सफ़ेद */
+            color: #1e293b;
+            line-height: 1.7;
             margin: 0;
             padding: 20px;
         }
         .about-container {
             max-width: 800px; 
-            margin: 40px auto; 
-            background: #ffffff; 
-            padding: 40px 50px; 
-            border-radius: 12px; 
-            box-shadow: 0 4px 20px rgba(0,0,0,0.05); 
+            margin: 0 auto; /* डब्बा और शैडो हटा दिया */
+            padding: 20px 0;
         }
         .header-box {
-            text-align: center;
-            margin-bottom: 35px;
-            padding-bottom: 20px;
+            text-align: left;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
             border-bottom: 2px solid #e2e8f0;
         }
         h1 { 
-            color: var(--primary-blue); 
+            color: #1e3a8a; 
             font-size: 2.5em; 
             margin: 0 0 5px 0;
             font-weight: 800;
@@ -75,62 +65,35 @@
             margin: 0;
         }
         h2 { 
-            color: var(--secondary-blue); 
-            font-size: 1.4em; 
-            margin-top: 30px;
-            display: flex;
-            align-items: center;
-        }
-        h2::before {
-            content: "";
-            display: inline-block;
-            width: 4px;
-            height: 20px;
-            background-color: var(--secondary-blue);
-            margin-right: 10px;
-            border-radius: 4px;
+            color: #2563eb; 
+            font-size: 1.5em; 
+            margin-top: 35px;
+            margin-bottom: 15px;
         }
         p { 
-            font-size: 1.05em; 
-            margin-bottom: 15px; 
+            font-size: 1.1em; 
+            margin-bottom: 20px; 
+            color: #334155;
         }
         .founder-highlight {
-            font-weight: 700;
-            color: var(--primary-blue);
-            background: #eff6ff;
-            padding: 2px 8px;
-            border-radius: 4px;
-        }
-        .info-card {
-            background-color: #f0fdf4;
-            border-left: 4px solid #16a34a;
-            padding: 20px;
-            border-radius: 0 8px 8px 0;
-            margin-top: 35px;
-        }
-        .info-card h3 {
-            color: #166534;
-            margin: 0 0 10px 0;
-            font-size: 1.2em;
+            font-weight: bold;
+            color: #1e3a8a;
         }
         .contact-box {
-            margin-top: 40px; 
-            text-align: center; 
-            padding: 20px;
-            background: #f8fafc;
-            border-radius: 8px;
+            margin-top: 50px; 
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
         }
         .contact-link {
-            color: var(--secondary-blue);
+            color: #2563eb;
             text-decoration: none;
             font-weight: bold;
-            font-size: 1.1em;
         }
         .contact-link:hover { text-decoration: underline; }
         
         @media (max-width: 768px) {
-            .about-container { padding: 25px; margin: 10px; }
             h1 { font-size: 2em; }
+            p { font-size: 1.05em; }
         }
     </style>
 </head>
@@ -150,15 +113,11 @@
         <h2>👨‍💻 The Founder</h2>
         <p>Janz Education is independently founded and operated by <span class="founder-highlight">Mohammad Ayub Janz</span>. As a student and web developer from Jodhpur, Rajasthan, the founder understands the exact challenges aspirants face. This platform was built to bridge the gap between students and reliable, free educational resources.</p>
         
-        <div class="info-card">
-            <h3>🌐 Our Sister Platform: Janz Tales</h3>
-            <p style="margin-bottom: 0;">For the latest educational news, board exam results, admit cards, and blogs, visit our official news portal: <a href="https://janztales.online" target="_blank" class="contact-link">Janz Tales</a>.</p>
-        </div>
+        <h2>🌐 Our Sister Platform: Janz Tales</h2>
+        <p>For the latest educational news, board exam results, admit cards, and blogs, visit our official news portal: <a href="https://janztales.online" target="_blank" class="contact-link">Janz Tales</a>.</p>
 
         <div class="contact-box">
-            <strong>Get in Touch</strong><br>
-            For support or queries, drop an email at: <br>
-            <a href="mailto:janztales@gmail.com" class="contact-link">janztales@gmail.com</a>
+            <p><strong>Get in Touch:</strong> For support or queries, drop an email at: <a href="mailto:janztales@gmail.com" class="contact-link">janztales@gmail.com</a></p>
         </div>
     </div>
 
