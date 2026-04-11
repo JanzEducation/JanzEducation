@@ -9,10 +9,10 @@ tags: [MMU ET 2026, Nursing, BSc Nursing, Jodhpur]
 ---
 
 राजस्थान के नर्सिंग और मेडिकल फील्ड में करियर बनाने का सपना देख रहे विज्ञान (Biology) के छात्रों के लिए एक बहुत बड़ा और सुनहरा मौका सामने आया है। हाल ही में स्थापित **मारवाड़ मेडिकल यूनिवर्सिटी (MMU), जोधपुर** पहली बार B.Sc Nursing कोर्स में प्रवेश के लिए अपना खुद का एंट्रेंस एग्जाम (MMU ET 2026) आयोजित करने जा रही है। 
-
-<p style="text-align: right; font-size: 15px; font-weight: bold; margin-bottom: 20px; border-bottom: 1px solid #ddd; padding-bottom: 10px;">
-  ✍️ लेखक - <a href="https://instagram.com/md_ayub_janj" target="_blank" style="color: #1e3a8a; text-decoration: none;">MD AYUB JANZ</a>
+<p style="text-align: right; font-size: 15px; font-weight: bold; margin-bottom: 20px; border-bottom: 1px solid #ddd; padding-bottom: 10px; color: #1e3a8a;">
+  ✍️ लेखक - MD AYUB JANZ
 </p>
+
 
 <div style="background-color: #e0f2fe; border-left: 5px solid #0284c7; padding: 15px; margin-bottom: 20px; border-radius: 4px;">
   <strong>🚨 महत्वपूर्ण अपडेट:</strong> आधिकारिक जानकारी के अनुसार MMU ET 2026 के लिए ऑनलाइन आवेदन <strong>20 अप्रैल 2026</strong> से शुरू होंगे और फॉर्म भरने की अंतिम तिथि <strong>10 मई 2026</strong> निर्धारित की गई है। प्रवेश परीक्षा का आयोजन <strong>जून 2026</strong> में किया जाएगा। छात्रों को RUHS के साथ-साथ MMU का फॉर्म भी अवश्य भरना चाहिए ताकि चयन के अवसर बढ़ सकें।
